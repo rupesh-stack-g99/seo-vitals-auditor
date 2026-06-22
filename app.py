@@ -36,7 +36,7 @@ def find_sitemap_url(domain):
 
 def get_urls_from_sitemap(sitemap_url):
     urls = []
-    allowed_sitemaps = ["page-sitemap", "portfolio-sitemap", "blog-sitemap"]
+    allowed_sitemaps = ["page-sitemap", "portfolio-sitemap"]
     forbidden_ext = [".webp", ".png", ".jpg", ".jpeg", ".svg", ".gif", ".pdf", ".zip"]
     
     try:
