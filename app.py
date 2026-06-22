@@ -6,7 +6,7 @@ import time
 from urllib.parse import urlparse
 
 # --- CONFIGURATION & UI SETUP ---
-st.set_page_config(page_title="SiteVitals Pro by Growth99", page_icon="🚀", layout="wide")
+st.set_page_config(page_title="G99 PageSpeed Auditor", page_icon="🚀", layout="wide")
 
 st.title("PageSpeed Auditor")
 st.subheader("Powered by Growth99")
