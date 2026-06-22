@@ -7,7 +7,7 @@ from urllib.parse import urlparse
 
 # --- CONFIGURATION & UI SETUP ---
 st.set_page_config(page_title="SEO Auditor", page_icon="🚀", layout="wide")
-st.title("🚀 Smart SEO & Core Web Vitals Auditor")
+st.title("SEO Core Web Vitals Auditor")
 st.write("Enter a website domain below to crawl its pages and run a deep Core Web Vitals audit.")
 
 # Securely grab API key from Streamlit Secrets or fallback to user input
