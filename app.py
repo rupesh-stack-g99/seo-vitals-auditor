@@ -292,7 +292,7 @@ if run_audit:
                         passed_count = len(df[df["Issues Found"] == "Passed Audit"])
                         issue_count = total_scanned - passed_count
                         
-                        st.markdown("### 📊 Executive Audit Summary")
+                        st.markdown("### 📊 Audit Summary")
                         metric_col1, metric_col2, metric_col3 = st.columns(3)
                         with metric_col1:
                             st.metric(label="Total Pages Evaluated", value=total_scanned)
@@ -308,7 +308,7 @@ if run_audit:
                         # Direct Action Download Option Button
                         csv = df.to_csv(index=False).encode('utf-8')
                         st.download_button(
-                            label="📥 Export Enterprise Audit Data as CSV Sheet", 
+                            label="📥 Export Audit Data as CSV Sheet", 
                             data=csv, 
                             file_name=f"Growth99_SEO_Audit_{target_domain}.csv", 
                             mime='text/csv',
