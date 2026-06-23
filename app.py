@@ -119,12 +119,23 @@ st.markdown("""
 
 st.markdown("### 🔍 Initiate Deep Domain Analysis")
 
+# FEATURE UPGRADE: Read initial domain from URL query string if it exists
+url_params = st.query_params
+default_domain = url_params.get("domain", "")
+
+# If a domain parameter is passed via URL for the first time, auto-trigger the execution pipeline
+auto_run = False
+if "auto_triggered" not in st.session_state and default_domain != "":
+    st.session_state["auto_triggered"] = True
+    auto_run = True
+
 with st.form(key="audit_input_form"):
     input_col, button_col = st.columns([0.85, 0.15], vertical_alignment="bottom")
     
     with input_col:
         target_domain = st.text_input(
             "Target Website Domain",
+            value=default_domain,
             placeholder="e.g., mysite.com or https://mysite.com",
             label_visibility="collapsed"
         )
@@ -135,6 +146,9 @@ with st.form(key="audit_input_form"):
             use_container_width=True,
             type="primary"
         )
+
+# Execute if form is clicked OR if auto-triggered via a shared link parameters string
+should_execute = run_audit or auto_run
 
 # --- API KEY FETCH ---
 API_KEY = st.secrets.get("PAGESPEED_API_KEY", "")
@@ -255,12 +269,15 @@ def style_score_colors(val):
     return ''
 
 # --- UI APPLICATION PROCESS FLOW ---
-if run_audit:
+if should_execute:
     if not API_KEY:
         st.error("⚠️ Setup Interruption: Please check or provide your PAGESPEED_API_KEY inside secrets.")
     elif not target_domain:
         st.error("⚠️ System Alert: Please enter a domain before executing the scan pipeline.")
     else:
+        # FEATURE UPGRADE: Write parameter straight to browser URL bar
+        st.query_params["domain"] = target_domain
+        
         st.session_state["audit_results"] = None
         st.session_state["active_domain"] = None
         st.session_state["elapsed_time_string"] = None
@@ -395,10 +412,8 @@ if st.session_state.get("audit_results"):
     with m_col1:
         st.metric(label="Total Pages Evaluated", value=total_scanned)
     with m_col2:
-        # CLEANUP FIX: Removed delta parameter layout completely
         st.metric(label="Fully Passed Pages", value=passed_count)
     with m_col3:
-        # CLEANUP FIX: Removed delta parameter layout completely
         st.metric(label="Pages Flagging Issues", value=issue_count)
     with m_col4:
         st.metric(label="Low Performance (<90)", value=low_score_count)
