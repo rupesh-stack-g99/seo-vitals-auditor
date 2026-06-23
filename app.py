@@ -77,12 +77,19 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# Initialize global state variables safely
+if "audit_running" not in st.session_state:
+    st.session_state["audit_running"] = False
+if "audit_results" not in st.session_state:
+    st.session_state["audit_results"] = None
+
 # Helper function to wipe all states and start fresh
 def clear_all_audit_data():
     st.session_state["audit_results"] = None
     st.session_state["active_domain"] = None
     st.session_state["elapsed_time_string"] = None
     st.session_state["initial_pipeline_count"] = None
+    st.session_state["audit_running"] = False
     if "auto_triggered" in st.session_state:
         del st.session_state["auto_triggered"]
     st.query_params.clear()
@@ -107,7 +114,7 @@ with st.sidebar:
             Automatically ignores media files 
             (<span class="format-badge">.webp</span>, 
             <span class="format-badge">.png</span>, 
-            <span class="format-badge">.pdf</span>) & Blogs.
+            <span class="format-badge">.pdf</span>) & Blogs to protect your API limits.
         </div>
     </div>
     <div class="sidebar-section">
@@ -133,12 +140,11 @@ st.markdown("### 🔍 Initiate Deep Domain Analysis")
 url_params = st.query_params
 default_domain = url_params.get("domain", "")
 
-# Manage run execution via Session State cleanly
+# Manage automatic link tracking via Session State flags
+auto_run = False
 if "auto_triggered" not in st.session_state and default_domain != "":
     st.session_state["auto_triggered"] = True
     auto_run = True
-else:
-    auto_run = False
 
 with st.form(key="audit_input_form"):
     input_col, button_col = st.columns([0.85, 0.15], vertical_alignment="bottom")
@@ -157,6 +163,10 @@ with st.form(key="audit_input_form"):
             use_container_width=True,
             type="primary"
         )
+
+# Trigger audit execution if explicit request criteria are met
+if run_audit or auto_run:
+    st.session_state["audit_running"] = True
 
 # --- API KEY FETCH ---
 API_KEY = st.secrets.get("PAGESPEED_API_KEY", "")
@@ -276,18 +286,16 @@ def style_score_colors(val):
     return ''
 
 # --- UI APPLICATION PROCESS FLOW ---
-if run_audit or auto_run:
+# CRITICAL FIX: Only run if state is flagged true, NOT directly off volatile button conditions
+if st.session_state["audit_running"] and st.session_state["audit_results"] is None:
     if not API_KEY:
         st.error("⚠️ Setup Interruption: Please check or provide your PAGESPEED_API_KEY inside secrets.")
+        st.session_state["audit_running"] = False
     elif not target_domain:
         st.error("⚠️ System Alert: Please enter a domain before executing the scan pipeline.")
+        st.session_state["audit_running"] = False
     else:
         st.query_params["domain"] = target_domain
-        
-        st.session_state["audit_results"] = None
-        st.session_state["active_domain"] = None
-        st.session_state["elapsed_time_string"] = None
-        st.session_state["initial_pipeline_count"] = None
         st.markdown("---")
         
         status_col = st.columns(1)[0]
@@ -297,12 +305,14 @@ if run_audit or auto_run:
             
             if not sitemap:
                 st.error("❌ Link Discovery Fault: No Sitemap Found (404). Check spelling or try a full URL prefix.")
+                st.session_state["audit_running"] = False
             else:
                 with st.spinner("🧬 Decompressing mapping files and extracting structural target page nodes..."):
                     urls = get_urls_from_sitemap(sitemap)
                     
                 if not urls:
                     st.warning("⚠️ Logic Exception: No matching structural target layouts extracted from sitemap filters.")
+                    st.session_state["audit_running"] = False
                 else:
                     MAX_PAGES = 400
                     if len(urls) > MAX_PAGES:
@@ -396,6 +406,7 @@ if run_audit or auto_run:
                         st.success("🎉 **Data Collection Processing Cycle Complete!**")
                     else:
                         st.error("System Failure: Could not fetch diagnostics for these URLs.")
+                        st.session_state["audit_running"] = False
 
 # --- PERSISTENT DATA RENDERING BLOCK ---
 if st.session_state.get("audit_results"):
