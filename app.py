@@ -113,7 +113,7 @@ with st.sidebar:
             Automatically ignores media files 
             (<span class="format-badge">.webp</span>, 
             <span class="format-badge">.png</span>, 
-            <span class="format-badge">.pdf</span>) & Blogs.
+            <span class="format-badge">.pdf</span>) & Blogs to protect your API limits.
         </div>
     </div>
     
@@ -236,9 +236,25 @@ def fetch_vitals(url, api_key):
             if ttfb > 0.8: issues.append(f"TTFB Slow ({ttfb}s)")
             if fcp > 1.8:  issues.append(f"FCP High ({fcp}s)")
             
+            # Dynamically determine the health status emoji dot
+            if score >= 90:
+                status_dot = "🟢 Good"
+            elif score >= 50:
+                status_dot = "🟠 Average"
+            else:
+                status_dot = "🔴 Issue"
+
+            # Notice: The "HTTP" key has been completely removed from this return structure
             return {
-                "URL": url, "HTTP": 200, "Score": score, "LCP (s)": lcp, "CLS": cls, 
-                "TBT (ms)": tbt, "INP (ms)": inp, "TTFB (s)": ttfb, "FCP (s)": fcp, 
+                "URL": url, 
+                "Status": status_dot,
+                "Score": score, 
+                "LCP (s)": lcp, 
+                "CLS": cls, 
+                "TBT (ms)": tbt, 
+                "INP (ms)": inp, 
+                "TTFB (s)": ttfb, 
+                "FCP (s)": fcp, 
                 "Issues Found": ", ".join(issues) if issues else "Passed Audit"
             }
         except Exception as e:
@@ -319,7 +335,48 @@ if st.session_state.get("audit_results"):
     
     # --- MAIN INTERACTIVE TABLE DISPLAY ---
     st.markdown("### 📋 Dynamic Audit Log Sheets")
-    st.dataframe(df, use_container_width=True)
+    
+    # Custom text color style mapping for the score digits
+    def style_score_colors(val):
+        if val >= 90:
+            color = '#2ed573' # Light Green
+        elif val >= 50:
+            color = '#ffa502' # Light Orange
+        else:
+            color = '#ff4757' # Light Red
+        return f'color: {color}; font-weight: bold;'
+
+    try:
+        styled_df = df.style.map(style_score_colors, subset=['Score'])
+    except AttributeError:
+        styled_df = df.style.applymap(style_score_colors, subset=['Score'])
+
+    # Reorder columns to place Status right next to Score, keeping full URLs intact
+    column_order = ["URL", "Status", "Score", "LCP (s)", "CLS", "TBT (ms)", "INP (ms)", "TTFB (s)", "FCP (s)", "Issues Found"]
+    final_df = styled_df.obj[column_order]
+    
+    st.dataframe(
+        styled_df, 
+        use_container_width=True,
+        column_order=column_order,
+        column_config={
+            "URL": st.column_config.TextColumn(
+                "Audited URL Target",
+                help="Full structural path monitored by engine"
+            ),
+            "Status": st.column_config.TextColumn(
+                "Status",
+                help="Health band categorization based on scores"
+            ),
+            "Score": st.column_config.ProgressColumn(
+                "Performance Score",
+                help="Google PageSpeed Mobile Score (0 - 100)",
+                format="%d",
+                min_value=0,
+                max_value=100,
+            )
+        }
+    )
     
     # Direct Action Download Option Button
     csv = df.to_csv(index=False).encode('utf-8')
