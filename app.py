@@ -159,17 +159,3 @@ def fetch_vitals(url, api_key):
             fcp = round(get_val('first-contentful-paint') / 1000, 2)
             ttfb = round(get_val('server-response-time') / 1000, 2)
             cls = round(get_val('cumulative-layout-shift'), 3)
-            tbt = round(get_val('total-blocking-time'))
-            inp = round(audits.get('interaction-to-next-paint', {}).get('numericValue', 0))
-            
-            issues = []
-            if score < 90: issues.append(f"Score Low ({score}%)")
-            if lcp > 2.5:  issues.append(f"LCP High ({lcp}s)")
-            if cls > 0.1:  issues.append(f"CLS Poor ({cls})")
-            if tbt > 200:  issues.append(f"TBT High ({tbt}ms)")
-            if inp > 200:  issues.append(f"INP High ({inp}ms)")
-            if ttfb > 0.8: issues.append(f"TTFB Slow ({ttfb}s)")
-            if fcp > 1.8:  issues.append(f"FCP High ({fcp}s)")
-            
-            return {
-                "URL": url, "HTTP": 200, "Score": score, "LCP (s)": lcp, "CLS":
