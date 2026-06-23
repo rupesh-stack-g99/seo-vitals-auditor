@@ -335,6 +335,7 @@ if run_audit:
                                 
                                 try:
                                     styled_stream = current_stream_df.style.map(style_score_colors, subset=['Score'])
+                                except AttributeError:
                                     styled_stream = current_stream_df.style.applymap(style_score_colors, subset=['Score'])
                                     
                                 live_table_placeholder.dataframe(
