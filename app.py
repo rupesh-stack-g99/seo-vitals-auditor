@@ -260,6 +260,7 @@ if run_audit:
     else:
         st.session_state["audit_results"] = None
         st.session_state["active_domain"] = None
+        st.session_state["elapsed_time_string"] = None
         st.markdown("---")
         
         status_col = st.columns(1)[0]
@@ -277,13 +278,14 @@ if run_audit:
                 if not urls:
                     st.warning("⚠️ Logic Exception: No matching structural target layouts extracted from sitemap filters.")
                 else:
-                    # Configured to scale cleanly up to 400 pages max
                     MAX_PAGES = 400
                     if len(urls) > MAX_PAGES:
                         st.warning(f"⚠️ Large Website Detected! Found {len(urls)} pages. Capping crawl network grid limits to {MAX_PAGES} lines.")
                         urls = urls[:MAX_PAGES]
                     else:
                         st.info(f"📋 **Pipeline Initiated:** Found **{len(urls)}** unique URLs to systematically analyze.")
+                    
+                    start_time = time.time()
                     
                     results = []
                     progress_bar = st.progress(0)
@@ -301,17 +303,16 @@ if run_audit:
                         for future in as_completed(future_to_url):
                             url = future_to_url[future]
                             processed_count += 1
-                            status_text.markdown(f"⚡ **Analyzing Node ({processed_count}/{total_urls}):** `{url}`")
+                            
+                            live_elapsed = time.time() - start_time
+                            status_text.markdown(f"⚡ **Analyzing Node ({processed_count}/{total_urls})** | ⏱️ *{round(live_elapsed, 1)}s elapsed*:<br>`{url}`", unsafe_allow_html=True)
                             
                             try:
                                 audit_data = future.result()
                                 if audit_data:
                                     results.append(audit_data)
                                     
-                                    # Create the stream table
                                     current_stream_df = pd.DataFrame(results)
-                                    
-                                    # FIXED: Force live-streaming table indexes to count from 1 instead of 0
                                     current_stream_df.index = current_stream_df.index + 1
                                     
                                     column_order = ["URL", "Status", "Score", "LCP (s)", "CLS", "TBT (ms)", "INP (ms)", "TTFB (s)", "FCP (s)", "Issues Found"]
@@ -336,6 +337,15 @@ if run_audit:
                                 pass
                             progress_bar.progress(processed_count / total_urls)
                     
+                    end_time = time.time()
+                    total_duration = end_time - start_time
+                    if total_duration >= 60:
+                        mins = int(total_duration // 60)
+                        secs = int(total_duration % 60)
+                        st.session_state["elapsed_time_string"] = f"{mins}m {secs}s"
+                    else:
+                        st.session_state["elapsed_time_string"] = f"{round(total_duration, 1)}s"
+                        
                     status_text.empty()
                     progress_bar.empty()
                     live_table_placeholder.empty() 
@@ -352,19 +362,30 @@ if st.session_state.get("audit_results"):
     df = pd.DataFrame(st.session_state["audit_results"])
     df.index = df.index + 1
     current_domain = st.session_state.get("active_domain", "Domain")
+    duration_metric = st.session_state.get("elapsed_time_string", "N/A")
     
     total_scanned = len(df)
     passed_count = len(df[df["Issues Found"] == "Passed Audit"])
     issue_count = total_scanned - passed_count
     
+    # NEW METRIC CALCULATION: Total count of pages scoring strictly less than 90 (< 90)
+    low_score_count = len(df[df["Score"] < 90])
+    
     st.markdown("### 📊 Audit Summary")
-    metric_col1, metric_col2, metric_col3 = st.columns(3)
+    
+    # Expanded grid setup to support the 5 metrics seamlessly
+    metric_col1, metric_col2, metric_col3, metric_col4, metric_col5 = st.columns(5)
     with metric_col1:
         st.metric(label="Total Pages Evaluated", value=total_scanned)
     with metric_col2:
         st.metric(label="Fully Passed Pages", value=passed_count, delta=f"{round((passed_count/total_scanned)*100) if total_scanned > 0 else 0}% Match")
     with metric_col3:
         st.metric(label="Pages Flagging Issues", value=issue_count, delta=f"-{issue_count} Optimization Targets", delta_color="inverse")
+    with metric_col4:
+        # BRAND NEW DISPLAY BOX: Shows total paths scoring strictly under 90
+        st.metric(label="Low Performance Pages (<90)", value=low_score_count, delta="Score Target Deficit" if low_score_count > 0 else None, delta_color="inverse")
+    with metric_col5:
+        st.metric(label="Time Taken to Complete", value=duration_metric)
     
     st.markdown("### 📋 Dynamic Audit Log Sheets")
     
