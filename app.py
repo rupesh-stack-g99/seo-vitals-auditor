@@ -4,6 +4,7 @@ import xml.etree.ElementTree as ET
 import pandas as pd
 import time
 from urllib.parse import urlparse
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # --- CONFIGURATION & UI SETUP ---
 st.set_page_config(
@@ -15,7 +16,6 @@ st.set_page_config(
 # Custom Premium & Dynamic Cross-Theme Styling
 st.markdown("""
     <style>
-        /* Premium Banner Header - Universal dark gradient holds crisp contrast in any theme */
         .brand-header {
             background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             padding: 2.5rem;
@@ -36,19 +36,13 @@ st.markdown("""
             font-size: 1.1rem;
             margin: 0;
         }
-
-        /* Clean up Sidebar visual spacing */
         section[data-testid="stSidebar"] .stMarkdown {
             padding-right: 12px;
         }
-        
-        /* Premium Adaptive Sidebar Content Layout */
         .sidebar-section {
             margin-bottom: 1.75rem; 
             line-height: 1.6;
         }
-        
-        /* Adapts automatically: White in Dark mode / Dark Charcoal in Light mode */
         .sidebar-title {
             font-size: 1.05rem;
             font-weight: 700;
@@ -57,15 +51,11 @@ st.markdown("""
             display: flex;
             align-items: center;
         }
-        
-        /* Automatically switches to legible muted grays based on theme background */
         .sidebar-desc {
             font-size: 0.9rem;
             color: var(--secondary-text-color);
             margin-left: 1.6rem;
         }
-        
-        /* Dynamic inline micro-badges (.webp, .png) that look perfect on light or dark sidebars */
         .format-badge {
             background-color: rgba(46, 213, 115, 0.15);
             color: #2ed573 !important;
@@ -76,15 +66,11 @@ st.markdown("""
             font-weight: 600;
             display: inline-block;
         }
-        
-        /* Remove default borders around the form block container */
         div[data-testid="stForm"] {
             border: none !important;
             padding: 0 !important;
             background-color: transparent !important;
         }
-        
-        /* Fix text headers to gracefully match theme states */
         h3 {
             color: var(--text-color) !important;
         }
@@ -101,12 +87,10 @@ with st.sidebar:
         <div class="sidebar-title">⚙️ Automated Discovery</div>
         <div class="sidebar-desc">Finds and decompresses your website's primary XML sitemap layouts.</div>
     </div>
-    
     <div class="sidebar-section">
         <div class="sidebar-title">🎯 Target Mapping</div>
         <div class="sidebar-desc">Extracts high-value page, service, and portfolio links.</div>
     </div>
-    
     <div class="sidebar-section">
         <div class="sidebar-title">🛡️ Smart Filtering</div>
         <div class="sidebar-desc">
@@ -116,10 +100,9 @@ with st.sidebar:
             <span class="format-badge">.pdf</span>) & Blogs to protect your API limits.
         </div>
     </div>
-    
     <div class="sidebar-section">
         <div class="sidebar-title">📊 Real-time Core Vitals Diagnostics</div>
-        <div class="sidebar-desc">Directly analyzes performance, LCP, CLS, TBT, and responsiveness metrics via the Google PageSpeed API.</div>
+        <div class="sidebar-desc">Directly analyzes performance metrics concurrently via the Google PageSpeed API.</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -209,7 +192,7 @@ def fetch_vitals(url, api_key):
     max_retries = 3
     for attempt in range(max_retries):
         try:
-            res = requests.get(api_url, timeout=40)
+            res = requests.get(api_url, timeout=30)
             if res.status_code == 429:
                 time.sleep(5)  
                 continue
@@ -236,7 +219,6 @@ def fetch_vitals(url, api_key):
             if ttfb > 0.8: issues.append(f"TTFB Slow ({ttfb}s)")
             if fcp > 1.8:  issues.append(f"FCP High ({fcp}s)")
             
-            # Dynamically determine the health status emoji dot
             if score >= 90:
                 status_dot = "🟢 Good"
             elif score >= 50:
@@ -259,8 +241,15 @@ def fetch_vitals(url, api_key):
         except Exception as e:
             if attempt == max_retries - 1:
                 return None
-            time.sleep(2)
+            time.sleep(1)
     return None
+
+def style_score_colors(val):
+    if isinstance(val, (int, float)):
+        if val >= 90: return 'color: #2ed573; font-weight: bold;'
+        elif val >= 50: return 'color: #ffa502; font-weight: bold;'
+        else: return 'color: #ff4757; font-weight: bold;'
+    return ''
 
 # --- UI APPLICATION PROCESS FLOW ---
 if run_audit:
@@ -288,22 +277,66 @@ if run_audit:
                 if not urls:
                     st.warning("⚠️ Logic Exception: No matching structural target layouts extracted from sitemap filters.")
                 else:
-                    st.info(f"📋 **Pipeline Initiated:** Found **{len(urls)}** unique URLs to systematically analyze.")
+                    # Configured to scale cleanly up to 400 pages max
+                    MAX_PAGES = 400
+                    if len(urls) > MAX_PAGES:
+                        st.warning(f"⚠️ Large Website Detected! Found {len(urls)} pages. Capping crawl network grid limits to {MAX_PAGES} lines.")
+                        urls = urls[:MAX_PAGES]
+                    else:
+                        st.info(f"📋 **Pipeline Initiated:** Found **{len(urls)}** unique URLs to systematically analyze.")
                     
                     results = []
                     progress_bar = st.progress(0)
                     status_text = st.empty()
                     
-                    for idx, url in enumerate(urls):
-                        status_text.markdown(f"⚡ **Analyzing Node ({idx+1}/{len(urls)}):** `{url}`")
-                        audit_data = fetch_vitals(url, API_KEY)
-                        if audit_data:
-                            results.append(audit_data)
-                        progress_bar.progress((idx + 1) / len(urls))
-                        time.sleep(0.5) 
+                    # Dedicated containers to stream real-time results on-screen to keep the connection alive
+                    st.markdown("### 📊 Live Diagnostic Streaming")
+                    live_table_placeholder = st.empty()
+                    
+                    total_urls = len(urls)
+                    processed_count = 0
+                    
+                    # Optimizing workers to 8 concurrent threads for high-speed tracking
+                    with ThreadPoolExecutor(max_workers=8) as executor:
+                        future_to_url = {executor.submit(fetch_vitals, url, API_KEY): url for url in urls}
+                        
+                        for future in as_completed(future_to_url):
+                            url = future_to_url[future]
+                            processed_count += 1
+                            status_text.markdown(f"⚡ **Analyzing Node ({processed_count}/{total_urls}):** `{url}`")
+                            
+                            try:
+                                audit_data = future.result()
+                                if audit_data:
+                                    results.append(audit_data)
+                                    
+                                    # STREAM REFRESH: Immediately render the tables to trick the webserver timeout
+                                    current_stream_df = pd.DataFrame(results)
+                                    column_order = ["URL", "Status", "Score", "LCP (s)", "CLS", "TBT (ms)", "INP (ms)", "TTFB (s)", "FCP (s)", "Issues Found"]
+                                    existing_cols = [c for c in column_order if c in current_stream_df.columns]
+                                    current_stream_df = current_stream_df[existing_cols]
+                                    
+                                    try:
+                                        styled_stream = current_stream_df.style.map(style_score_colors, subset=['Score'])
+                                    except AttributeError:
+                                        styled_stream = current_stream_df.style.applymap(style_score_colors, subset=['Score'])
+                                        
+                                    live_table_placeholder.dataframe(
+                                        styled_stream,
+                                        use_container_width=True,
+                                        column_config={
+                                            "URL": st.column_config.TextColumn("Audited URL Target"),
+                                            "Status": st.column_config.TextColumn("Status"),
+                                            "Score": st.column_config.ProgressColumn("Performance Score", format="%d", min_value=0, max_value=100)
+                                        }
+                                    )
+                            except Exception as exc:
+                                pass
+                            progress_bar.progress(processed_count / total_urls)
                     
                     status_text.empty()
                     progress_bar.empty()
+                    live_table_placeholder.empty() # Wipe streaming placeholder to show clean final block below
                     
                     if len(results) > 0:
                         st.session_state["audit_results"] = results
@@ -318,7 +351,6 @@ if st.session_state.get("audit_results"):
     df.index = df.index + 1
     current_domain = st.session_state.get("active_domain", "Domain")
     
-    # --- BRAND METRIC EXECUTIVE SUMMARY SECTION ---
     total_scanned = len(df)
     passed_count = len(df[df["Issues Found"] == "Passed Audit"])
     issue_count = total_scanned - passed_count
@@ -328,26 +360,15 @@ if st.session_state.get("audit_results"):
     with metric_col1:
         st.metric(label="Total Pages Evaluated", value=total_scanned)
     with metric_col2:
-        st.metric(label="Fully Passed Pages", value=passed_count, delta=f"{round((passed_count/total_scanned)*100)}% Match")
+        st.metric(label="Fully Passed Pages", value=passed_count, delta=f"{round((passed_count/total_scanned)*100) if total_scanned > 0 else 0}% Match")
     with metric_col3:
         st.metric(label="Pages Flagging Issues", value=issue_count, delta=f"-{issue_count} Optimization Targets", delta_color="inverse")
     
-    # --- MAIN INTERACTIVE TABLE DISPLAY ---
     st.markdown("### 📋 Dynamic Audit Log Sheets")
     
-    # Secure proper layout ordering right on the raw DataFrame safely
     column_order = ["URL", "Status", "Score", "LCP (s)", "CLS", "TBT (ms)", "INP (ms)", "TTFB (s)", "FCP (s)", "Issues Found"]
-    df = df[column_order]
-
-    # Dynamic text color highlighting for score integers
-    def style_score_colors(val):
-        if val >= 90:
-            color = '#2ed573' # Green
-        elif val >= 50:
-            color = '#ffa502' # Orange
-        else:
-            color = '#ff4757' # Red
-        return f'color: {color}; font-weight: bold;'
+    existing_columns = [col for col in column_order if col in df.columns]
+    df = df[existing_columns]
 
     try:
         styled_df = df.style.map(style_score_colors, subset=['Score'])
@@ -358,34 +379,19 @@ if st.session_state.get("audit_results"):
         styled_df, 
         use_container_width=True,
         column_config={
-            "URL": st.column_config.TextColumn(
-                "Audited URL Target",
-                help="Full original path monitored by crawl engine"
-            ),
-            "Status": st.column_config.TextColumn(
-                "Status",
-                help="Performance categorization group status flag"
-            ),
-            "Score": st.column_config.ProgressColumn(
-                "Performance Score",
-                help="Google PageSpeed Mobile Score (0 - 100)",
-                format="%d",
-                min_value=0,
-                max_value=100,
-            )
+            "URL": st.column_config.TextColumn("Audited URL Target", help="Full original path monitored"),
+            "Status": st.column_config.TextColumn("Status", help="Performance status categorization group"),
+            "Score": st.column_config.ProgressColumn("Performance Score", format="%d", min_value=0, max_value=100)
         }
     )
     
-    # --- SECURE CSV EXPORT SANITIZATION BLOCK ---
-    # We copy the dataframe and safely strip emoji characters so Excel parses raw text cleanly
     export_df = df.copy()
-    export_df["Status"] = export_df["Status"].str.replace("🟢 ", "", regex=False)\
-                                             .str.replace("🟠 ", "", regex=False)\
-                                             .str.replace("🔴 ", "", regex=False)
+    if "Status" in export_df.columns:
+        export_df["Status"] = export_df["Status"].astype(str).str.replace("🟢 ", "", regex=False)\
+                                                 .str.replace("🟠 ", "", regex=False)\
+                                                 .str.replace("🔴 ", "", regex=False)
     
-    # Encode with 'utf-8-sig' to ensure Excel reads formatting smoothly without artifacts
     csv_data = export_df.to_csv(index=False).encode('utf-8-sig')
-    
     st.download_button(
         label="📥 Export Audit Data as CSV Sheet", 
         data=csv_data, 
