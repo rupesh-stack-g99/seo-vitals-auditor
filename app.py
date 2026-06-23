@@ -289,14 +289,12 @@ if run_audit:
                     progress_bar = st.progress(0)
                     status_text = st.empty()
                     
-                    # Dedicated containers to stream real-time results on-screen to keep the connection alive
                     st.markdown("### 📊 Live Diagnostic Streaming")
                     live_table_placeholder = st.empty()
                     
                     total_urls = len(urls)
                     processed_count = 0
                     
-                    # Optimizing workers to 8 concurrent threads for high-speed tracking
                     with ThreadPoolExecutor(max_workers=8) as executor:
                         future_to_url = {executor.submit(fetch_vitals, url, API_KEY): url for url in urls}
                         
@@ -310,8 +308,12 @@ if run_audit:
                                 if audit_data:
                                     results.append(audit_data)
                                     
-                                    # STREAM REFRESH: Immediately render the tables to trick the webserver timeout
+                                    # Create the stream table
                                     current_stream_df = pd.DataFrame(results)
+                                    
+                                    # FIXED: Force live-streaming table indexes to count from 1 instead of 0
+                                    current_stream_df.index = current_stream_df.index + 1
+                                    
                                     column_order = ["URL", "Status", "Score", "LCP (s)", "CLS", "TBT (ms)", "INP (ms)", "TTFB (s)", "FCP (s)", "Issues Found"]
                                     existing_cols = [c for c in column_order if c in current_stream_df.columns]
                                     current_stream_df = current_stream_df[existing_cols]
@@ -336,7 +338,7 @@ if run_audit:
                     
                     status_text.empty()
                     progress_bar.empty()
-                    live_table_placeholder.empty() # Wipe streaming placeholder to show clean final block below
+                    live_table_placeholder.empty() 
                     
                     if len(results) > 0:
                         st.session_state["audit_results"] = results
