@@ -7,7 +7,7 @@ from urllib.parse import urlparse
 
 # --- CONFIGURATION & UI SETUP ---
 st.set_page_config(
-    page_title="PageSpeed Auditor", 
+    page_title="PageSpeed Auditor | Growth99", 
     page_icon="🚀", 
     layout="wide",
     initial_sidebar_state="expanded"
@@ -49,7 +49,7 @@ st.markdown("""
             margin-bottom: 1rem;
         }
     </style>
-""", unsafe_gradient=True, unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
 # --- SIDEBAR INTERFACE ---
 with st.sidebar:
@@ -62,7 +62,7 @@ with st.sidebar:
     if not API_KEY:
         API_KEY = st.text_input("🔑 PageSpeed API Key", type="password", help="Provide your Google PageSpeed Insights API key.")
     else:
-        st.success("🔒 System API Key Connected Active")
+        st.success("🔒 System API Key Connected")
         
     st.markdown("---")
     st.markdown("### 📋 Audit Rule Filters")
@@ -89,7 +89,6 @@ with st.container():
             label_visibility="collapsed"
         )
     with col_btn:
-        # Pushing the button down slightly to align horizontally with the input bar
         st.markdown("<div style='margin-top: 1px;'></div>", unsafe_allow_html=True)
         run_audit = st.button("Run Deep Audit", use_container_width=True, type="primary")
 
@@ -194,7 +193,6 @@ if run_audit:
     else:
         st.markdown("---")
         
-        # Real-time Visual status steps
         status_col = st.columns(1)[0]
         with status_col:
             with st.spinner("🔍 Crawling system looking for XML sitemap indexes..."):
@@ -260,4 +258,4 @@ if run_audit:
                             type="secondary"
                         )
                     else:
-                        st.error("System Failure: Unable to fetch core web speed diagnostics across selected URL patterns.")
+                        st.error("System Failure: Unable to fetch core web speed diagnostics across selected
