@@ -44,17 +44,26 @@ st.markdown("""
 
         /* Clean up Sidebar visual spacing */
         section[data-testid="stSidebar"] .stMarkdown {
-            padding-right: 10px;
+            padding-right: 12px;
         }
         
         /* Premium Custom Sidebar Content Spacing Layout */
-        .sidebar-item {
-            margin-bottom: 1.5rem; 
-            line-height: 1.6;
-            font-size: 0.95rem;
+        .sidebar-section {
+            margin-bottom: 1.75rem; 
+            line-height: 1.5;
         }
-        .sidebar-item b {
+        .sidebar-title {
+            font-size: 1rem;
+            font-weight: 700;
             color: #f8fafc;
+            margin-bottom: 0.35rem !important;
+            display: flex;
+            align-items: center;
+        }
+        .sidebar-desc {
+            font-size: 0.9rem;
+            color: #94a3b8;
+            margin-left: 1.5rem;
         }
         
         /* Remove default borders around the form block container */
@@ -71,19 +80,36 @@ with st.sidebar:
     st.markdown("### How the PageSpeed Auditor Works")
     st.markdown("---")
     
-    # Using clean HTML blocks to guarantee explicit spacing control down the sidebar
+    # Premium spaced HTML structure for clear sidebar presentation
     st.markdown("""
-    <div class="sidebar-item">
-        • <b>Automated Discovery:</b> Finds and decompresses your website's primary XML sitemap layouts.
+    <div class="sidebar-section">
+        <div class="sidebar-title">🔍 Sitemap Discovery</div>
+        <div class="sidebar-desc">Automatically discovers and analyzes important pages across your website.</div>
     </div>
-    <div class="sidebar-item">
-        • <b>Target Mapping:</b> Extracts high-value page, service, and portfolio links.
+    
+    <div class="sidebar-section">
+        <div class="sidebar-title">🎯 Page Prioritization</div>
+        <div class="sidebar-desc">Focuses on high-value service, location, and landing pages.</div>
     </div>
-    <div class="sidebar-item">
-        • <b>Smart Filtering:</b> Automatically ignores media files (<code style="color: #4ade80; background-color: #1e293b; padding: 2px 4px; border-radius: 4px;">.webp</code>, <code style="color: #4ade80; background-color: #1e293b; padding: 2px 4px; border-radius: 4px;">.png</code>, <code style="color: #4ade80; background-color: #1e293b; padding: 2px 4px; border-radius: 4px;">.pdf</code>) & Blogs.
+    
+    <div class="sidebar-section">
+        <div class="sidebar-title">⚡ Smart URL Filtering</div>
+        <div class="sidebar-desc">Excludes media files (.webp, .png, .pdf) and blog non-essential URLs to ensure accurate audits.</div>
     </div>
-    <div class="sidebar-item">
-        • <b>Real-time Core Vitals Diagnostics:</b> Directly analyzes performance, LCP, CLS, TBT, and responsiveness metrics via the Google PageSpeed API.
+    
+    <div class="sidebar-section">
+        <div class="sidebar-title">📊 Core Web Vitals Analysis</div>
+        <div class="sidebar-desc">Measures LCP, CLS, INP, TBT, TTFB, and other key performance metrics.</div>
+    </div>
+    
+    <div class="sidebar-section">
+        <div class="sidebar-title">🚨 Issue Detection</div>
+        <div class="sidebar-desc">Identifies pages with performance bottlenecks and Core Web Vitals failures.</div>
+    </div>
+    
+    <div class="sidebar-section">
+        <div class="sidebar-title">💡 Optimization Insights</div>
+        <div class="sidebar-desc">Provides actionable recommendations to improve website speed and user experience.</div>
     </div>
     """, unsafe_allow_html=True)
 
