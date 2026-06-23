@@ -80,7 +80,7 @@ with st.sidebar:
         • <b>Target Mapping:</b> Extracts high-value page, service, and portfolio links.
     </div>
     <div class="sidebar-item">
-        • <b>Smart Filtering:</b> Automatically ignores media files (<code style="color: #4ade80; background-color: #1e293b; padding: 2px 4px; border-radius: 4px;">.webp</code>, <code style="color: #4ade80; background-color: #1e293b; padding: 2px 4px; border-radius: 4px;">.png</code>, <code style="color: #4ade80; background-color: #1e293b; padding: 2px 4px; border-radius: 4px;">.pdf</code>) & Blogs to protect your API limits.
+        • <b>Smart Filtering:</b> Automatically ignores media files (<code style="color: #4ade80; background-color: #1e293b; padding: 2px 4px; border-radius: 4px;">.webp</code>, <code style="color: #4ade80; background-color: #1e293b; padding: 2px 4px; border-radius: 4px;">.png</code>, <code style="color: #4ade80; background-color: #1e293b; padding: 2px 4px; border-radius: 4px;">.pdf</code>) & Blogs.
     </div>
     <div class="sidebar-item">
         • <b>Real-time Core Vitals Diagnostics:</b> Directly analyzes performance, LCP, CLS, TBT, and responsiveness metrics via the Google PageSpeed API.
