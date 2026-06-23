@@ -80,7 +80,7 @@ st.markdown("""
 st.markdown("---")
 
 # Domain Input Section (Button moved below the URL Input box)
-st.markdown("### ⚡ Core Web Vitals & PageSpeed Analysis")
+st.markdown("### ⚡ Core Web Vitals & PageSpeed Analyzer")
 target_domain = st.text_input(
     "Target Website Domain", 
     placeholder="e.g., mysite.com or https://mysite.com",
