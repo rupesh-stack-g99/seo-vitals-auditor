@@ -7,7 +7,7 @@ from urllib.parse import urlparse
 
 # --- CONFIGURATION & UI SETUP ---
 st.set_page_config(
-    page_title="PageSpeed Auditor| Growth99", 
+    page_title="PageSpeed Auditor | Growth99", 
     page_icon="🚀", 
     layout="wide"
 )
@@ -64,14 +64,14 @@ API_KEY = st.secrets.get("PAGESPEED_API_KEY", "")
 if not API_KEY:
     API_KEY = st.text_input("🔑 Enter PageSpeed API Key", type="password", help="Provide your Google PageSpeed Insights API key.")
 
-# Professional "How it works" Guideline Display (Blog references completely removed)
+# Professional "How it works" Guideline Display
 st.markdown("""
     <div style="background-color: #1e293b; padding: 1.25rem; border-radius: 8px; border-left: 5px solid #3b82f6; margin-bottom: 1.5rem;">
         <h4 style="margin-top: 0; color: #f8fafc;">⚙️ How the Audit Engine Works</h4>
         <ul style="margin-bottom: 0; color: #cbd5e1; font-size: 0.95rem; padding-left: 1.2rem;">
             <li><b>Automated Discovery:</b> Finds and decompresses your website's primary XML sitemap layouts.</li>
             <li><b>Target Mapping:</b> Extracts high-value page, service, and portfolio links.</li>
-            <li><b>Smart Filtering:</b> Automatically ignores media files (.webp, .png, .pdf) & Blogs to protect your API limits .</li>
+            <li><b>Smart Filtering:</b> Automatically ignores media files (.webp, .png, .pdf) & Blogs to protect your API limits.</li>
             <li><b>Real-time Core Vitals Diagnostics:</b> Directly analyzes performance, LCP, CLS, TBT, and responsiveness metrics via the Google PageSpeed API.</li>
         </ul>
     </div>
@@ -79,21 +79,17 @@ st.markdown("""
 
 st.markdown("---")
 
-# Domain Input Section (Fixed alignment padding layout)
-with st.container():
-    st.markdown("### 🔍 Initiate Deep Domain Analysis")
-    col_input, col_btn = st.columns([4, 1])
-    
-    with col_input:
-        target_domain = st.text_input(
-            "Target Website Domain", 
-            placeholder="e.g., mysite.com or https://mysite.com",
-            label_visibility="collapsed"
-        )
-    with col_btn:
-        # Pushes button down exactly 24px to align it horizontally with the input field container row
-        st.markdown("<div style='margin-top: 24px;'></div>", unsafe_allow_html=True)
-        run_audit = st.button("Run Deep Audit", use_container_width=True, type="primary")
+# Domain Input Section (Button moved below the URL Input box)
+st.markdown("### 🔍 Initiate Deep Domain Analysis")
+target_domain = st.text_input(
+    "Target Website Domain", 
+    placeholder="e.g., mysite.com or https://mysite.com",
+    label_visibility="collapsed"
+)
+
+# Slight spacer before the button for visual breathing room
+st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
+run_audit = st.button("Run Deep Audit", use_container_width=False, type="primary")
 
 # --- CORE LOGIC FUNCTIONS ---
 
@@ -114,7 +110,6 @@ def find_sitemap_url(domain):
 
 def get_urls_from_sitemap(sitemap_url):
     urls = []
-    # "blog-sitemap" completely removed from allowed categories
     allowed_sitemaps = ["page-sitemap", "portfolio-sitemap"]
     forbidden_ext = [".webp", ".png", ".jpg", ".jpeg", ".svg", ".gif", ".pdf", ".zip"]
     
@@ -134,7 +129,6 @@ def get_urls_from_sitemap(sitemap_url):
                     urls.extend(get_urls_from_sitemap(loc))
             else:
                 is_image = any(loc.lower().endswith(ext) for ext in forbidden_ext)
-                # Filter out any blog mentions completely
                 if not is_image and "/wp-content/uploads/" not in loc.lower() and "/blog" not in loc.lower():
                     urls.append(loc)
     except Exception as e:
@@ -178,88 +172,4 @@ def fetch_vitals(url, api_key):
             if fcp > 1.8:  issues.append(f"FCP High ({fcp}s)")
             
             return {
-                "URL": url, "HTTP": 200, "Score": score, "LCP (s)": lcp, "CLS": cls, 
-                "TBT (ms)": tbt, "INP (ms)": inp, "TTFB (s)": ttfb, "FCP (s)": fcp, 
-                "Issues Found": ", ".join(issues) if issues else "Passed Audit"
-            }
-        except Exception as e:
-            if attempt == max_retries - 1:
-                return None
-            time.sleep(2)
-    return None
-
-# --- UI APPLICATION PROCESS FLOW ---
-if run_audit:
-    if not API_KEY:
-        st.error("⚠️ Setup Interruption: Please check or provide a PageSpeed API Key above.")
-    elif not target_domain:
-        st.error("⚠️ System Alert: Please enter a domain before executing the scan pipeline.")
-    else:
-        st.markdown("---")
-        
-        status_col = st.columns(1)[0]
-        with status_col:
-            with st.spinner("🔍 Crawling system looking for XML sitemap indexes..."):
-                sitemap = find_sitemap_url(target_domain)
-            
-            if not sitemap:
-                st.error("❌ Link Discovery Fault: No Sitemap Found (404). Check spelling or try a full URL prefix.")
-            else:
-                st.markdown(f"**📌 Target Route Discovered:** `{sitemap}`")
-                with st.spinner("🧬 Decompressing mapping files and extracting structural target page nodes..."):
-                    urls = get_urls_from_sitemap(sitemap)
-                    
-                if not urls:
-                    st.warning("⚠️ Logic Exception: No matching structural target layouts extracted from sitemap filters.")
-                else:
-                    st.info(f"📋 **Pipeline Initiated:** Found **{len(urls)}** unique URLs to systematically analyze.")
-                    
-                    results = []
-                    progress_bar = st.progress(0)
-                    status_text = st.empty()
-                    
-                    for idx, url in enumerate(urls):
-                        status_text.markdown(f"⚡ **Analyzing Node ({idx+1}/{len(urls)}):** `{url}`")
-                        audit_data = fetch_vitals(url, API_KEY)
-                        if audit_data:
-                            results.append(audit_data)
-                        progress_bar.progress((idx + 1) / len(urls))
-                        time.sleep(0.5) 
-                    
-                    status_text.empty()
-                    progress_bar.empty()
-                    st.success("🎉 **Data Collection Processing Cycle Complete!**")
-                    
-                    if results:
-                        df = pd.DataFrame(results)
-                        df.index = df.index + 1
-                        
-                        # --- BRAND METRIC EXECUTIVE SUMMARY SECTION ---
-                        total_scanned = len(df)
-                        passed_count = len(df[df["Issues Found"] == "Passed Audit"])
-                        issue_count = total_scanned - passed_count
-                        
-                        st.markdown("### 📊 Executive Audit Summary")
-                        metric_col1, metric_col2, metric_col3 = st.columns(3)
-                        with metric_col1:
-                            st.metric(label="Total Pages Evaluated", value=total_scanned)
-                        with metric_col2:
-                            st.metric(label="Fully Passed Pages", value=passed_count, delta=f"{round((passed_count/total_scanned)*100)}% Match")
-                        with metric_col3:
-                            st.metric(label="Pages Flagging Issues", value=issue_count, delta=f"-{issue_count} Optimization Targets", delta_color="inverse")
-                        
-                        # --- MAIN INTERACTIVE TABLE DISPLAY ---
-                        st.markdown("### 📋 Dynamic Audit Log Sheets")
-                        st.dataframe(df, use_container_width=True)
-                        
-                        # Direct Action Download Option Button
-                        csv = df.to_csv(index=False).encode('utf-8')
-                        st.download_button(
-                            label="📥 Export Enterprise Audit Data as CSV Sheet", 
-                            data=csv, 
-                            file_name=f"Growth99_SEO_Audit_{target_domain}.csv", 
-                            mime='text/csv',
-                            type="secondary"
-                        )
-                    else:
-                        st.error("System Failure: Could not fetch diagnostics for these URLs.")
+                "URL": url, "HTTP": 200, "Score": score, "LCP (s)": lcp, "CLS":
