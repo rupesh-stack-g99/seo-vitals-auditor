@@ -7,7 +7,7 @@ from urllib.parse import urlparse
 
 # --- CONFIGURATION & UI SETUP ---
 st.set_page_config(
-    page_title="PageSpeed Auditor | Growth99", 
+    page_title="SiteVitals Pro | Growth99", 
     page_icon="🚀", 
     layout="wide"
 )
@@ -54,17 +54,28 @@ st.markdown("""
 # Brand Hero Banner Block
 st.markdown("""
     <div class="brand-header">
-        <h1>PageSpeed Auditor</h1>
-        <p>Advanced Core Web Vitals Checker • Powered by <b>Growth99</b></p>
+        <h1>SITEVITALS PRO</h1>
+        <p>Advanced Core Web Vitals & Technical SEO Crawl Engine • Powered by <b>Growth99</b></p>
     </div>
 """, unsafe_allow_html=True)
 
-# --- API KEY STATUS / INPUT (Moved to Main Page) ---
+# --- API KEY STATUS & HOW IT WORKS GUIDE ---
 API_KEY = st.secrets.get("PAGESPEED_API_KEY", "")
 if not API_KEY:
     API_KEY = st.text_input("🔑 Enter PageSpeed API Key", type="password", help="Provide your Google PageSpeed Insights API key.")
-else:
-    st.info("🔒 System API Key Connected & Active")
+
+# Professional "How it works" Guideline Display
+st.markdown("""
+    <div style="background-color: #1e293b; padding: 1.25rem; border-radius: 8px; border-left: 5px solid #3b82f6; margin-bottom: 1.5rem;">
+        <h4 style="margin-top: 0; color: #f8fafc;">⚙️ How the Audit Engine Works</h4>
+        <ul style="margin-bottom: 0; color: #cbd5e1; font-size: 0.95rem; padding-left: 1.2rem;">
+            <li><b>Automated Discovery:</b> Finds and decompresses your website's primary XML sitemap layouts.</li>
+            <li><b>Target Mapping:</b> Extracts high-value page, service, portfolio, and main blog category index links.</li>
+            <li><b>Smart Filtering:</b> Automatically ignores media files (.webp, .png, .pdf) and deeply nested individual blog posts to protect your API limits.</li>
+            <li><b>Real-time Core Vitals Diagnostics:</b> Directly analyzes performance, LCP, CLS, TBT, and responsiveness metrics via the Google PageSpeed API.</li>
+        </ul>
+    </div>
+""", unsafe_allow_html=True)
 
 st.markdown("---")
 
