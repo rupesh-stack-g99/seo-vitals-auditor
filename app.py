@@ -47,34 +47,18 @@ st.markdown("""
             border: 1px solid #2d313e;
             margin-bottom: 1rem;
         }
-        /* Custom Styling for the System API badge in sidebar */
-        .api-badge {
-            background-color: #1c3d27;
-            color: #4ade80;
-            padding: 0.75rem;
-            border-radius: 6px;
-            text-align: center;
-            font-weight: 600;
-            border: 1px solid #225e3b;
-            margin-bottom: 1.5rem;
-        }
     </style>
 """, unsafe_allow_html=True)
 
 # --- COLLAPSIBLE LEFT SIDEBAR PANEL ---
 with st.sidebar:
-    st.markdown("## 🚀 Control Panel")
+    st.markdown("### ⚙️ How the Audit Engine Works")
     st.markdown("---")
-    
-    # API Status Indicator Badge
-    st.markdown('<div class="api-badge">🔒 System API Key Connected</div>', unsafe_allow_html=True)
-    
-    # Audit Filter Parameters Info Panel
-    st.markdown("### 📋 Audit Rule Filters")
     st.markdown("""
-    * • Crawls Page / Portfolio / Blog Index maps
-    * • Skips static image assets (.webp, .jpg)
-    * • Skips individual article deep links
+    * **Automated Discovery:** Finds and decompresses your website's primary XML sitemap layouts.
+    * **Target Mapping:** Extracts high-value page, service, and portfolio links.
+    * **Smart Filtering:** Automatically ignores media files (.webp, .png, .pdf) & Blogs to protect your API limits.
+    * **Real-time Core Vitals Diagnostics:** Directly analyzes performance, LCP, CLS, TBT, and responsiveness metrics via the Google PageSpeed API.
     """)
 
 # --- MAIN WORKSPACE ---
@@ -88,21 +72,6 @@ st.markdown("""
         </p>
     </div>
 """, unsafe_allow_html=True)
-
-# Professional "How it works" Guideline Display
-st.markdown("""
-    <div style="background-color: #1e293b; padding: 1.25rem; border-radius: 8px; border-left: 5px solid #3b82f6; margin-bottom: 1.5rem;">
-        <h4 style="margin-top: 0; color: #f8fafc;">⚙️ How the Audit Engine Works</h4>
-        <ul style="margin-bottom: 0; color: #cbd5e1; font-size: 0.95rem; padding-left: 1.2rem;">
-            <li><b>Automated Discovery:</b> Finds and decompresses your website's primary XML sitemap layouts.</li>
-            <li><b>Target Mapping:</b> Extracts high-value page, service, and portfolio links.</li>
-            <li><b>Smart Filtering:</b> Automatically ignores media files (.webp, .png, .pdf) & Blogs to protect your API limits.</li>
-            <li><b>Real-time Core Vitals Diagnostics:</b> Directly analyzes performance, LCP, CLS, TBT, and responsiveness metrics via the Google PageSpeed API.</li>
-        </ul>
-    </div>
-""", unsafe_allow_html=True)
-
-st.markdown("---")
 
 # Domain Input Section
 st.markdown("### ⚡ Core Web Vitals & PageSpeed Analyzer")
@@ -186,102 +155,4 @@ def fetch_vitals(url, api_key):
             lcp = round(safe_get_metric(audits, 'largest-contentful-paint') / 1000, 2)
             fcp = round(safe_get_metric(audits, 'first-contentful-paint') / 1000, 2)
             ttfb = round(safe_get_metric(audits, 'server-response-time') / 1000, 2)
-            cls = round(safe_get_metric(audits, 'cumulative-layout-shift'), 3)
-            tbt = round(safe_get_metric(audits, 'total-blocking-time'))
-            inp = round(audits.get('interaction-to-next-paint', {}).get('numericValue', 0))
-            
-            issues = []
-            if score < 90: issues.append(f"Score Low ({score}%)")
-            if lcp > 2.5:  issues.append(f"LCP High ({lcp}s)")
-            if cls > 0.1:  issues.append(f"CLS Poor ({cls})")
-            if tbt > 200:  issues.append(f"TBT High ({tbt}ms)")
-            if inp > 200:  issues.append(f"INP High ({inp}ms)")
-            if ttfb > 0.8: issues.append(f"TTFB Slow ({ttfb}s)")
-            if fcp > 1.8:  issues.append(f"FCP High ({fcp}s)")
-            
-            return {
-                "URL": url, "HTTP": 200, "Score": score, "LCP (s)": lcp, "CLS": cls, 
-                "TBT (ms)": tbt, "INP (ms)": inp, "TTFB (s)": ttfb, "FCP (s)": fcp, 
-                "Issues Found": ", ".join(issues) if issues else "Passed Audit"
-            }
-        except Exception as e:
-            if attempt == max_retries - 1:
-                return None
-            time.sleep(2)
-    return None
-
-# --- UI APPLICATION PROCESS FLOW ---
-if run_audit:
-    if not API_KEY:
-        st.error("⚠️ Setup Interruption: Please check or provide your PAGESPEED_API_KEY inside secrets.")
-    elif not target_domain:
-        st.error("⚠️ System Alert: Please enter a domain before executing the scan pipeline.")
-    else:
-        st.markdown("---")
-        
-        status_col = st.columns(1)[0]
-        with status_col:
-            with st.spinner("🔍 Crawling system looking for XML sitemap indexes..."):
-                sitemap = find_sitemap_url(target_domain)
-            
-            if not sitemap:
-                st.error("❌ Link Discovery Fault: No Sitemap Found (404). Check spelling or try a full URL prefix.")
-            else:
-                st.markdown(f"**📌 Target Route Discovered:** `{sitemap}`")
-                with st.spinner("🧬 Decompressing mapping files and extracting structural target page nodes..."):
-                    urls = get_urls_from_sitemap(sitemap)
-                    
-                if not urls:
-                    st.warning("⚠️ Logic Exception: No matching structural target layouts extracted from sitemap filters.")
-                else:
-                    st.info(f"📋 **Pipeline Initiated:** Found **{len(urls)}** unique URLs to systematically analyze.")
-                    
-                    results = []
-                    progress_bar = st.progress(0)
-                    status_text = st.empty()
-                    
-                    for idx, url in enumerate(urls):
-                        status_text.markdown(f"⚡ **Analyzing Node ({idx+1}/{len(urls)}):** `{url}`")
-                        audit_data = fetch_vitals(url, API_KEY)
-                        if audit_data:
-                            results.append(audit_data)
-                        progress_bar.progress((idx + 1) / len(urls))
-                        time.sleep(0.5) 
-                    
-                    status_text.empty()
-                    progress_bar.empty()
-                    st.success("🎉 **Data Collection Processing Cycle Complete!**")
-                    
-                    if len(results) > 0:
-                        df = pd.DataFrame(results)
-                        df.index = df.index + 1
-                        
-                        # --- BRAND METRIC EXECUTIVE SUMMARY SECTION ---
-                        total_scanned = len(df)
-                        passed_count = len(df[df["Issues Found"] == "Passed Audit"])
-                        issue_count = total_scanned - passed_count
-                        
-                        st.markdown("### 📊 Executive Audit Summary")
-                        metric_col1, metric_col2, metric_col3 = st.columns(3)
-                        with metric_col1:
-                            st.metric(label="Total Pages Evaluated", value=total_scanned)
-                        with metric_col2:
-                            st.metric(label="Fully Passed Pages", value=passed_count, delta=f"{round((passed_count/total_scanned)*100)}% Match")
-                        with metric_col3:
-                            st.metric(label="Pages Flagging Issues", value=issue_count, delta=f"-{issue_count} Optimization Targets", delta_color="inverse")
-                        
-                        # --- MAIN INTERACTIVE TABLE DISPLAY ---
-                        st.markdown("### 📋 Dynamic Audit Log Sheets")
-                        st.dataframe(df, use_container_width=True)
-                        
-                        # Direct Action Download Option Button
-                        csv = df.to_csv(index=False).encode('utf-8')
-                        st.download_button(
-                            label="📥 Export Enterprise Audit Data as CSV Sheet", 
-                            data=csv, 
-                            file_name=f"Growth99_SEO_Audit_{target_domain}.csv", 
-                            mime='text/csv',
-                            type="secondary"
-                        )
-                    else:
-                        st.error("System Failure: Could not fetch diagnostics for these URLs.")
+            cls = round(safe
