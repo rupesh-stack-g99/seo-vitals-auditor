@@ -77,7 +77,7 @@ st.markdown("""
             display: inline-block;
         }
         
-        /* Structural cleanups for headers and form blocks */
+        /* Remove default borders around the form block container */
         div[data-testid="stForm"] {
             border: none !important;
             padding: 0 !important;
@@ -129,7 +129,7 @@ st.markdown("""
         <h1>PageSpeed Auditor</h1>
         <p>Advanced Core Web Vitals Crawl Engine • Powered by <b>Growth99</b></p>
         <p style="font-size: 0.95rem; margin-top: 0.6rem; opacity: 0.85; max-width: 800px; margin-left: auto; margin-right: auto;">
-            Analyze website performance, identify Core Web Vitals issues & discover optimization opportunities across your most important pages.
+            Analyze website performance, identify Core Web Vitals issues, and discover optimization opportunities across your most important pages.
         </p>
     </div>
 """, unsafe_allow_html=True)
@@ -244,7 +244,6 @@ def fetch_vitals(url, api_key):
             else:
                 status_dot = "🔴 Issue"
 
-            # Notice: The "HTTP" key has been completely removed from this return structure
             return {
                 "URL": url, 
                 "Status": status_dot,
@@ -336,14 +335,18 @@ if st.session_state.get("audit_results"):
     # --- MAIN INTERACTIVE TABLE DISPLAY ---
     st.markdown("### 📋 Dynamic Audit Log Sheets")
     
-    # Custom text color style mapping for the score digits
+    # Order columns before applying styles to prevent internal state attributes errors
+    column_order = ["URL", "Status", "Score", "LCP (s)", "CLS", "TBT (ms)", "INP (ms)", "TTFB (s)", "FCP (s)", "Issues Found"]
+    df = df[column_order]
+
+    # Dynamic text color highlighting for score integers
     def style_score_colors(val):
         if val >= 90:
-            color = '#2ed573' # Light Green
+            color = '#2ed573' # Green
         elif val >= 50:
-            color = '#ffa502' # Light Orange
+            color = '#ffa502' # Orange
         else:
-            color = '#ff4757' # Light Red
+            color = '#ff4757' # Red
         return f'color: {color}; font-weight: bold;'
 
     try:
@@ -351,22 +354,17 @@ if st.session_state.get("audit_results"):
     except AttributeError:
         styled_df = df.style.applymap(style_score_colors, subset=['Score'])
 
-    # Reorder columns to place Status right next to Score, keeping full URLs intact
-    column_order = ["URL", "Status", "Score", "LCP (s)", "CLS", "TBT (ms)", "INP (ms)", "TTFB (s)", "FCP (s)", "Issues Found"]
-    final_df = styled_df.obj[column_order]
-    
     st.dataframe(
         styled_df, 
         use_container_width=True,
-        column_order=column_order,
         column_config={
             "URL": st.column_config.TextColumn(
                 "Audited URL Target",
-                help="Full structural path monitored by engine"
+                help="Full original path monitored by crawl engine"
             ),
             "Status": st.column_config.TextColumn(
                 "Status",
-                help="Health band categorization based on scores"
+                help="Performance categorization group status flag"
             ),
             "Score": st.column_config.ProgressColumn(
                 "Performance Score",
