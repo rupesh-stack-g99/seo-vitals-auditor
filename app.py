@@ -7,10 +7,9 @@ from urllib.parse import urlparse
 
 # --- CONFIGURATION & UI SETUP ---
 st.set_page_config(
-    page_title="SiteVitals Pro | Growth99", 
+    page_title="PageSpeed Auditor | Growth99", 
     page_icon="🚀", 
-    layout="wide",
-    initial_sidebar_state="expanded"
+    layout="wide"
 )
 
 # Custom Premium Styling
@@ -51,31 +50,23 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- SIDEBAR INTERFACE ---
-with st.sidebar:
-    st.image("https://img.icons8.com/fluent/96/000000/rocket.png", width=80)
-    st.title("Control Panel")
-    st.markdown("---")
-    
-    # Securely grab API key from Streamlit Secrets or sidebar fallback
-    API_KEY = st.secrets.get("PAGESPEED_API_KEY", "")
-    if not API_KEY:
-        API_KEY = st.text_input("🔑 PageSpeed API Key", type="password", help="Provide your Google PageSpeed Insights API key.")
-    else:
-        st.success("🔒 System API Key Connected")
-        
-    st.markdown("---")
-    st.markdown("### 📋 Audit Rule Filters")
-    st.caption("• Crawls Page / Portfolio / Blog Index maps\n• Skips static image assets (.webp, .jpg)\n• Skips individual article deep links")
-
 # --- MAIN WORKSPACE ---
 # Brand Hero Banner Block
 st.markdown("""
     <div class="brand-header">
         <h1>SITEVITALS PRO</h1>
-        <p>Advanced Core Web Vitals & Technical SEO Crawl Engine • Powered by <b>Growth99</b></p>
+        <p>Advanced Core Web Vitals Checker • Powered by <b>Growth99</b></p>
     </div>
 """, unsafe_allow_html=True)
+
+# --- API KEY STATUS / INPUT (Moved to Main Page) ---
+API_KEY = st.secrets.get("PAGESPEED_API_KEY", "")
+if not API_KEY:
+    API_KEY = st.text_input("🔑 Enter PageSpeed API Key", type="password", help="Provide your Google PageSpeed Insights API key.")
+else:
+    st.info("🔒 System API Key Connected & Active")
+
+st.markdown("---")
 
 # Domain Input Section Wrapped inside a clean layout container
 with st.container():
@@ -187,7 +178,7 @@ def fetch_vitals(url, api_key):
 # --- UI APPLICATION PROCESS FLOW ---
 if run_audit:
     if not API_KEY:
-        st.error("⚠️ Setup Interruption: Please check or provide a PageSpeed API Key in the Left Control Panel.")
+        st.error("⚠️ Setup Interruption: Please check or provide a PageSpeed API Key above.")
     elif not target_domain:
         st.error("⚠️ System Alert: Please enter a domain before executing the scan pipeline.")
     else:
