@@ -47,24 +47,47 @@ st.markdown("""
             border: 1px solid #2d313e;
             margin-bottom: 1rem;
         }
+        /* Custom Styling for the System API badge in sidebar */
+        .api-badge {
+            background-color: #1c3d27;
+            color: #4ade80;
+            padding: 0.75rem;
+            border-radius: 6px;
+            text-align: center;
+            font-weight: 600;
+            border: 1px solid #225e3b;
+            margin-bottom: 1.5rem;
+        }
     </style>
 """, unsafe_allow_html=True)
+
+# --- COLLAPSIBLE LEFT SIDEBAR PANEL ---
+with st.sidebar:
+    st.markdown("## 🚀 Control Panel")
+    st.markdown("---")
+    
+    # API Status Indicator Badge
+    st.markdown('<div class="api-badge">🔒 System API Key Connected</div>', unsafe_allow_html=True)
+    
+    # Audit Filter Parameters Info Panel
+    st.markdown("### 📋 Audit Rule Filters")
+    st.markdown("""
+    * • Crawls Page / Portfolio / Blog Index maps
+    * • Skips static image assets (.webp, .jpg)
+    * • Skips individual article deep links
+    """)
 
 # --- MAIN WORKSPACE ---
 # Brand Hero Banner Block
 st.markdown("""
     <div class="brand-header">
         <h1>PageSpeed Auditor</h1>
-        <p>Advanced Core Web Vitals Crawl Engine • Powered by <b>Growth99
-
-    Analyze website performance, identify Core Web Vitals issues, and discover optimization opportunities across your most important pages.
+        <p>Advanced Core Web Vitals Crawl Engine • Powered by <b>Growth99</b></p>
+        <p style="font-size: 1rem; margin-top: 0.5rem; opacity: 0.8;">
+            Analyze website performance, identify Core Web Vitals issues, and discover optimization opportunities across your most important pages.
+        </p>
     </div>
 """, unsafe_allow_html=True)
-
-# --- API KEY STATUS & HOW IT WORKS GUIDE ---
-API_KEY = st.secrets.get("PAGESPEED_API_KEY", "")
-if not API_KEY:
-    API_KEY = st.text_input("🔑 Enter PageSpeed API Key", type="password", help="Provide your Google PageSpeed Insights API key.")
 
 # Professional "How it works" Guideline Display
 st.markdown("""
@@ -81,7 +104,7 @@ st.markdown("""
 
 st.markdown("---")
 
-# Domain Input Section (Button moved below the URL Input box)
+# Domain Input Section
 st.markdown("### ⚡ Core Web Vitals & PageSpeed Analyzer")
 target_domain = st.text_input(
     "Target Website Domain", 
@@ -92,6 +115,9 @@ target_domain = st.text_input(
 # Slight spacer before the button for visual breathing room
 st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
 run_audit = st.button("Run Performance Audit", use_container_width=False, type="primary")
+
+# --- API KEY FETCH ---
+API_KEY = st.secrets.get("PAGESPEED_API_KEY", "")
 
 # --- CORE LOGIC FUNCTIONS ---
 
@@ -137,7 +163,6 @@ def get_urls_from_sitemap(sitemap_url):
         pass
     return list(set(urls))
 
-# Safe metric helper extracted globally to fix execution blocks
 def safe_get_metric(audits_dict, key_name):
     return audits_dict.get(key_name, {}).get('numericValue', 0)
 
@@ -188,7 +213,7 @@ def fetch_vitals(url, api_key):
 # --- UI APPLICATION PROCESS FLOW ---
 if run_audit:
     if not API_KEY:
-        st.error("⚠️ Setup Interruption: Please check or provide a PageSpeed API Key above.")
+        st.error("⚠️ Setup Interruption: Please check or provide your PAGESPEED_API_KEY inside secrets.")
     elif not target_domain:
         st.error("⚠️ System Alert: Please enter a domain before executing the scan pipeline.")
     else:
