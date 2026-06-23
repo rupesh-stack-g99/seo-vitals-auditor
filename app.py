@@ -411,15 +411,8 @@ if st.session_state.get("audit_results"):
     
     low_score_count = len(df[(df["Score"] < 90) & (df["Status"] != "🔴 API Timeout/Error")])
     
-    # FEATURE UPGRADE: Display a designated dashboard Click-to-Share widget panel
     st.markdown("### 🔗 Share This Performance Report")
     
-    # Formulate a dynamic absolute URL reference based on the runtime context
-    try:
-        base_url = st.get_option("browser.serverAddress") if st.get_option("browser.serverAddress") else "localhost"
-    except:
-        base_url = "localhost"
-        
     shareable_report_url = f"https://seo-vitals-auditor.streamlit.app/?domain={current_domain}"
     
     with st.container():
@@ -428,8 +421,8 @@ if st.session_state.get("audit_results"):
             <b>Direct Share Link:</b> Use this link to share these direct vitals details with clients or team members.
         </div>
         """, unsafe_allow_html=True)
-        # Display link with built-in quick copy tool function
-        st.text_input("Copy Report Link:", value=shareable_report_url, read_only=True, label_visibility="collapsed")
+        # BUG FIX: Swapped out 'read_only=True' for 'disabled=True' to achieve total backward compatibility
+        st.text_input("Copy Report Link:", value=shareable_report_url, disabled=True, label_visibility="collapsed")
     
     st.markdown("---")
     st.markdown("### 📊 Audit Summary")
