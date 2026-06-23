@@ -12,23 +12,18 @@ st.set_page_config(
     layout="wide"
 )
 
-# Custom Premium Dark Theme Styling
+# Custom Premium & Adaptive Theme Styling
 st.markdown("""
     <style>
-        /* Main background and global text resets */
-        .main {
-            background-color: #0f111a;
-        }
-        
-        /* Premium Banner Header */
+        /* Premium Banner Header - Uses universal dark gradient to keep crisp white text readable regardless of theme */
         .brand-header {
             background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             padding: 2.5rem;
             border-radius: 12px;
-            color: white;
+            color: white !important;
             text-align: center;
             margin-bottom: 2rem;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
         }
         .brand-header h1 {
             color: white !important;
@@ -37,8 +32,8 @@ st.markdown("""
             margin-bottom: 0.4rem !important;
         }
         .brand-header p {
+            color: rgba(255, 255, 255, 0.95) !important;
             font-size: 1.1rem;
-            opacity: 0.95;
             margin: 0;
         }
 
@@ -47,23 +42,25 @@ st.markdown("""
             padding-right: 12px;
         }
         
-        /* Premium Custom Sidebar Content Spacing Layout */
+        /* Premium Adaptive Sidebar Content Spacing Layout */
         .sidebar-section {
             margin-bottom: 1.75rem; 
             line-height: 1.5;
         }
+        /* Uses native text color variable (White in Dark Mode, Charcoal in Light Mode) */
         .sidebar-title {
             font-size: 1rem;
             font-weight: 700;
-            color: #f8fafc;
+            color: var(--text-color);
             margin-bottom: 0.35rem !important;
             display: flex;
             align-items: center;
         }
+        /* Uses native secondary text color variable (Muted gray in both modes) */
         .sidebar-desc {
             font-size: 0.9rem;
-            color: #94a3b8;
-            margin-left: 1.5rem;
+            color: var(--secondary-text-color);
+            margin-left: 1.6rem;
         }
         
         /* Remove default borders around the form block container */
@@ -243,7 +240,6 @@ if run_audit:
     elif not target_domain:
         st.error("⚠️ System Alert: Please enter a domain before executing the scan pipeline.")
     else:
-        # Clear out previous stored audit data on a brand new execution run
         st.session_state["audit_results"] = None
         st.session_state["active_domain"] = None
         st.markdown("---")
@@ -281,7 +277,6 @@ if run_audit:
                     progress_bar.empty()
                     
                     if len(results) > 0:
-                        # Save the completed data run securely inside the permanent session storage state
                         st.session_state["audit_results"] = results
                         st.session_state["active_domain"] = target_domain
                         st.success("🎉 **Data Collection Processing Cycle Complete!**")
@@ -289,7 +284,6 @@ if run_audit:
                         st.error("System Failure: Could not fetch diagnostics for these URLs.")
 
 # --- PERSISTENT DATA RENDERING BLOCK ---
-# This block catches script reruns (like Export clicks) and keeps the data drawn safely on-screen
 if st.session_state.get("audit_results"):
     df = pd.DataFrame(st.session_state["audit_results"])
     df.index = df.index + 1
