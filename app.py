@@ -54,7 +54,7 @@ st.markdown("""
 # Brand Hero Banner Block
 st.markdown("""
     <div class="brand-header">
-        <h1>SITEVITALS PRO</h1>
+        <h1>PageSpeed Auditor</h1>
         <p>Advanced Core Web Vitals Checker • Powered by <b>Growth99</b></p>
     </div>
 """, unsafe_allow_html=True)
