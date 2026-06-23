@@ -310,7 +310,6 @@ if run_audit:
                             
                             try:
                                 audit_data = future.result()
-                                # LOGIC UPGRADE: If the API failed to return data, add a fallback error row to our final dataset
                                 if not audit_data:
                                     audit_data = {
                                         "URL": url, 
@@ -336,7 +335,6 @@ if run_audit:
                                 
                                 try:
                                     styled_stream = current_stream_df.style.map(style_score_colors, subset=['Score'])
-                                ] except AttributeError:
                                     styled_stream = current_stream_df.style.applymap(style_score_colors, subset=['Score'])
                                     
                                 live_table_placeholder.dataframe(
@@ -380,13 +378,11 @@ if st.session_state.get("audit_results"):
     duration_metric = st.session_state.get("elapsed_time_string", "N/A")
     initial_total = st.session_state.get("initial_pipeline_count", len(df))
     
-    # Calculate metrics based on the status flags
     failed_skipped_count = len(df[df["Status"] == "🔴 API Timeout/Error"])
     total_scanned = len(df) - failed_skipped_count
     passed_count = len(df[df["Issues Found"] == "Passed Audit"])
     issue_count = total_scanned - passed_count
     
-    # Do not count failed API lines inside the performance score logic
     low_score_count = len(df[(df["Score"] < 90) & (df["Status"] != "🔴 API Timeout/Error")])
     
     st.markdown("### 📊 Audit Summary")
@@ -432,4 +428,11 @@ if st.session_state.get("audit_results"):
                                                  .str.replace("🟠 ", "", regex=False)\
                                                  .str.replace("🔴 ", "", regex=False)
     
-    csv_data = export_df.
+    csv_data = export_df.to_csv(index=False).encode('utf-8-sig')
+    st.download_button(
+        label="📥 Export Audit Data as CSV Sheet", 
+        data=csv_data, 
+        file_name=f"Growth99_SEO_Audit_{current_domain}.csv", 
+        mime='text/csv',
+        type="secondary"
+    )
