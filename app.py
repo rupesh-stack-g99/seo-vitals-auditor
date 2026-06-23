@@ -107,7 +107,7 @@ with st.sidebar:
             Automatically ignores media files 
             (<span class="format-badge">.webp</span>, 
             <span class="format-badge">.png</span>, 
-            <span class="format-badge">.pdf</span>) & Blogs to protect your API limits.
+            <span class="format-badge">.pdf</span>) & Blogs.
         </div>
     </div>
     <div class="sidebar-section">
