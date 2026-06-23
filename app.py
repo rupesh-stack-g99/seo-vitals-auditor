@@ -12,10 +12,10 @@ st.set_page_config(
     layout="wide"
 )
 
-# Custom Premium & Adaptive Theme Styling
+# Custom Premium & Dynamic Cross-Theme Styling
 st.markdown("""
     <style>
-        /* Premium Banner Header - Uses universal dark gradient to keep crisp white text readable regardless of theme */
+        /* Premium Banner Header - Universal dark gradient holds crisp contrast in any theme */
         .brand-header {
             background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             padding: 2.5rem;
@@ -23,7 +23,7 @@ st.markdown("""
             color: white !important;
             text-align: center;
             margin-bottom: 2rem;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.12);
         }
         .brand-header h1 {
             color: white !important;
@@ -42,70 +42,84 @@ st.markdown("""
             padding-right: 12px;
         }
         
-        /* Premium Adaptive Sidebar Content Spacing Layout */
+        /* Premium Adaptive Sidebar Content Layout */
         .sidebar-section {
             margin-bottom: 1.75rem; 
-            line-height: 1.5;
+            line-height: 1.6;
         }
-        /* Uses native text color variable (White in Dark Mode, Charcoal in Light Mode) */
+        
+        /* Adapts automatically: White in Dark mode / Dark Charcoal in Light mode */
         .sidebar-title {
-            font-size: 1rem;
+            font-size: 1.05rem;
             font-weight: 700;
             color: var(--text-color);
-            margin-bottom: 0.35rem !important;
+            margin-bottom: 0.4rem !important;
             display: flex;
             align-items: center;
         }
-        /* Uses native secondary text color variable (Muted gray in both modes) */
+        
+        /* Automatically switches to legible muted grays based on theme background */
         .sidebar-desc {
             font-size: 0.9rem;
             color: var(--secondary-text-color);
             margin-left: 1.6rem;
         }
         
-        /* Remove default borders around the form block container */
+        /* Dynamic inline micro-badges (.webp, .png) that look perfect on light or dark sidebars */
+        .format-badge {
+            background-color: rgba(46, 213, 115, 0.15);
+            color: #2ed573 !important;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+        
+        /* Structural cleanups for headers and form blocks */
         div[data-testid="stForm"] {
             border: none !important;
             padding: 0 !important;
             background-color: transparent !important;
+        }
+        
+        /* Fix text headers to gracefully match theme states */
+        h3 {
+            color: var(--text-color) !important;
         }
     </style>
 """, unsafe_allow_html=True)
 
 # --- COLLAPSIBLE LEFT SIDEBAR PANEL ---
 with st.sidebar:
-    st.markdown("### How the PageSpeed Auditor Works")
+    st.markdown("### How the Audit Engine Works")
     st.markdown("---")
     
     st.markdown("""
     <div class="sidebar-section">
-        <div class="sidebar-title">🔍 Sitemap Discovery</div>
-        <div class="sidebar-desc">Automatically discovers and analyzes important pages across your website.</div>
+        <div class="sidebar-title">⚙️ Automated Discovery</div>
+        <div class="sidebar-desc">Finds and decompresses your website's primary XML sitemap layouts.</div>
     </div>
     
     <div class="sidebar-section">
-        <div class="sidebar-title">🎯 Page Prioritization</div>
-        <div class="sidebar-desc">Focuses on high-value service, location, and landing pages.</div>
+        <div class="sidebar-title">🎯 Target Mapping</div>
+        <div class="sidebar-desc">Extracts high-value page, service, and portfolio links.</div>
     </div>
     
     <div class="sidebar-section">
-        <div class="sidebar-title">⚡ Smart URL Filtering</div>
-        <div class="sidebar-desc">Excludes media files (.webp, .png, .pdf), blog and non-essential URLs to ensure accurate audits.</div>
+        <div class="sidebar-title">🛡️ Smart Filtering</div>
+        <div class="sidebar-desc">
+            Automatically ignores media files 
+            (<span class="format-badge">.webp</span>, 
+            <span class="format-badge">.png</span>, 
+            <span class="format-badge">.pdf</span>) & Blogs to protect your API limits.
+        </div>
     </div>
     
     <div class="sidebar-section">
-        <div class="sidebar-title">📊 Core Web Vitals Analysis</div>
-        <div class="sidebar-desc">Measures LCP, CLS, INP, TBT, TTFB, and other key performance metrics.</div>
-    </div>
-    
-    <div class="sidebar-section">
-        <div class="sidebar-title">🚨 Issue Detection</div>
-        <div class="sidebar-desc">Identifies pages with performance bottlenecks and Core Web Vitals failures.</div>
-    </div>
-    
-    <div class="sidebar-section">
-        <div class="sidebar-title">💡 Optimization Insights</div>
-        <div class="sidebar-desc">Provides actionable recommendations to improve website speed and user experience.</div>
+        <div class="sidebar-title">📊 Real-time Core Vitals Diagnostics</div>
+        <div class="sidebar-desc">Directly analyzes performance, LCP, CLS, TBT, and responsiveness metrics via the Google PageSpeed API.</div>
     </div>
     """, unsafe_allow_html=True)
 
