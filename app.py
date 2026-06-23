@@ -47,6 +47,16 @@ st.markdown("""
             padding-right: 10px;
         }
         
+        /* Premium Custom Sidebar Content Spacing Layout */
+        .sidebar-item {
+            margin-bottom: 1.5rem; 
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+        .sidebar-item b {
+            color: #f8fafc;
+        }
+        
         /* Remove default borders around the form block container */
         div[data-testid="stForm"] {
             border: none !important;
@@ -60,12 +70,22 @@ st.markdown("""
 with st.sidebar:
     st.markdown("### ⚙️ How the Audit Engine Works")
     st.markdown("---")
+    
+    # Using clean HTML blocks to guarantee explicit spacing control down the sidebar
     st.markdown("""
-    * **Automated Discovery:** Finds and decompresses your website's primary XML sitemap layouts.
-    * **Target Mapping:** Extracts high-value page, service, and portfolio links.
-    * **Smart Filtering:** Automatically ignores media files (`.webp`, `.png`, `.pdf`) & Blogs to protect your API limits.
-    * **Real-time Core Vitals Diagnostics:** Directly analyzes performance, LCP, CLS, TBT, and responsiveness metrics via the Google PageSpeed API.
-    """)
+    <div class="sidebar-item">
+        • <b>Automated Discovery:</b> Finds and decompresses your website's primary XML sitemap layouts.
+    </div>
+    <div class="sidebar-item">
+        • <b>Target Mapping:</b> Extracts high-value page, service, and portfolio links.
+    </div>
+    <div class="sidebar-item">
+        • <b>Smart Filtering:</b> Automatically ignores media files (<code style="color: #4ade80; background-color: #1e293b; padding: 2px 4px; border-radius: 4px;">.webp</code>, <code style="color: #4ade80; background-color: #1e293b; padding: 2px 4px; border-radius: 4px;">.png</code>, <code style="color: #4ade80; background-color: #1e293b; padding: 2px 4px; border-radius: 4px;">.pdf</code>) & Blogs to protect your API limits.
+    </div>
+    <div class="sidebar-item">
+        • <b>Real-time Core Vitals Diagnostics:</b> Directly analyzes performance, LCP, CLS, TBT, and responsiveness metrics via the Google PageSpeed API.
+    </div>
+    """, unsafe_allow_html=True)
 
 # --- MAIN WORKSPACE ---
 # Brand Hero Banner Block
