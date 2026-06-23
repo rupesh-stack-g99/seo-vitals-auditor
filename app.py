@@ -189,16 +189,14 @@ def safe_get_metric(audits_dict, key_name):
 def fetch_vitals(url, api_key):
     api_url = f"https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url={requests.utils.quote(url)}&key={api_key}&strategy=mobile&category=performance"
     
-    # LOGIC UPGRADE: Increased retries and extended timeouts (up to 45 seconds per request) to prevent network drops
     max_retries = 4
     for attempt in range(max_retries):
         try:
-            # Gradually increase timeouts per retry attempt (30s, 35s, 40s, 45s)
             current_timeout = 30 + (attempt * 5)
             res = requests.get(api_url, timeout=current_timeout)
             
             if res.status_code == 429:
-                time.sleep(6 * (attempt + 1))  # Exponential backoff on rate limits
+                time.sleep(6 * (attempt + 1))  
                 continue
             if res.status_code != 200:
                 time.sleep(2)
@@ -246,7 +244,7 @@ def fetch_vitals(url, api_key):
         except Exception as e:
             if attempt == max_retries - 1:
                 return None
-            time.sleep(3) # Wait briefly before triggering the next retry attempt
+            time.sleep(3)
     return None
 
 def style_score_colors(val):
@@ -397,13 +395,15 @@ if st.session_state.get("audit_results"):
     with m_col1:
         st.metric(label="Total Pages Evaluated", value=total_scanned)
     with m_col2:
-        st.metric(label="Fully Passed Pages", value=passed_count, delta=f"{round((passed_count/total_scanned)*100) if total_scanned > 0 else 0}% Match")
+        # CLEANUP FIX: Removed delta parameter layout completely
+        st.metric(label="Fully Passed Pages", value=passed_count)
     with m_col3:
-        st.metric(label="Pages Flagging Issues", value=issue_count, delta=f"-{issue_count} Optimization Targets", delta_color="inverse")
+        # CLEANUP FIX: Removed delta parameter layout completely
+        st.metric(label="Pages Flagging Issues", value=issue_count)
     with m_col4:
-        st.metric(label="Low Performance (<90)", value=low_score_count, delta="Action Needed" if low_score_count > 0 else None, delta_color="inverse")
+        st.metric(label="Low Performance (<90)", value=low_score_count)
     with m_col5:
-        st.metric(label="Failed / Skipped Pages", value=failed_skipped_count, delta=f"Out of {initial_total} total urls" if failed_skipped_count > 0 else None, delta_color="inverse" if failed_skipped_count > 0 else "off")
+        st.metric(label="Failed / Skipped Pages", value=failed_skipped_count)
     with m_col6:
         st.metric(label="Time Taken to Complete", value=duration_metric)
     
