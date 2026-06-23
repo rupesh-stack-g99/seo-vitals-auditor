@@ -74,14 +74,6 @@ st.markdown("""
         h3 {
             color: var(--text-color) !important;
         }
-        /* Style for the internal link-sharing box */
-        .share-box {
-            background-color: rgba(30, 60, 114, 0.05);
-            border: 1px dashed #2a5298;
-            padding: 1rem;
-            border-radius: 8px;
-            margin-bottom: 1.5rem;
-        }
     </style>
 """, unsafe_allow_html=True)
 
@@ -127,10 +119,11 @@ st.markdown("""
 
 st.markdown("### 🔍 Initiate Deep Domain Analysis")
 
-# Read initial domain from URL query string if it exists
+# FEATURE UPGRADE: Read initial domain from URL query string if it exists
 url_params = st.query_params
 default_domain = url_params.get("domain", "")
 
+# If a domain parameter is passed via URL for the first time, auto-trigger the execution pipeline
 auto_run = False
 if "auto_triggered" not in st.session_state and default_domain != "":
     st.session_state["auto_triggered"] = True
@@ -154,6 +147,7 @@ with st.form(key="audit_input_form"):
             type="primary"
         )
 
+# Execute if form is clicked OR if auto-triggered via a shared link parameters string
 should_execute = run_audit or auto_run
 
 # --- API KEY FETCH ---
@@ -281,6 +275,7 @@ if should_execute:
     elif not target_domain:
         st.error("⚠️ System Alert: Please enter a domain before executing the scan pipeline.")
     else:
+        # FEATURE UPGRADE: Write parameter straight to browser URL bar
         st.query_params["domain"] = target_domain
         
         st.session_state["audit_results"] = None
@@ -411,20 +406,6 @@ if st.session_state.get("audit_results"):
     
     low_score_count = len(df[(df["Score"] < 90) & (df["Status"] != "🔴 API Timeout/Error")])
     
-    st.markdown("### 🔗 Share This Performance Report")
-    
-    shareable_report_url = f"https://seo-vitals-auditor.streamlit.app/?domain={current_domain}"
-    
-    with st.container():
-        st.markdown(f"""
-        <div class="share-box">
-            <b>Direct Share Link:</b> Use this link to share these direct vitals details with clients or team members.
-        </div>
-        """, unsafe_allow_html=True)
-        # BUG FIX: Swapped out 'read_only=True' for 'disabled=True' to achieve total backward compatibility
-        st.text_input("Copy Report Link:", value=shareable_report_url, disabled=True, label_visibility="collapsed")
-    
-    st.markdown("---")
     st.markdown("### 📊 Audit Summary")
     
     m_col1, m_col2, m_col3, m_col4, m_col5, m_col6 = st.columns(6)
