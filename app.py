@@ -56,8 +56,8 @@ st.markdown("""
     <div class="brand-header">
         <h1>PageSpeed Auditor</h1>
         <p>Advanced Core Web Vitals Crawl Engine • Powered by <b>Growth99
-        
-        Analyze website performance, identify Core Web Vitals issues, and discover optimization opportunities across your most important pages.
+
+    Analyze website performance, identify Core Web Vitals issues, and discover optimization opportunities across your most important pages.
     </div>
 """, unsafe_allow_html=True)
 
