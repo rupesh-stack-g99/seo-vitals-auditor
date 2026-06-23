@@ -7,7 +7,7 @@ from urllib.parse import urlparse
 
 # --- CONFIGURATION & UI SETUP ---
 st.set_page_config(
-    page_title="SiteVitals Pro | Growth99", 
+    page_title="PageSpeed Auditor| Growth99", 
     page_icon="🚀", 
     layout="wide"
 )
