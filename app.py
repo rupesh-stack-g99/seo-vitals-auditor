@@ -261,6 +261,7 @@ if run_audit:
         st.session_state["audit_results"] = None
         st.session_state["active_domain"] = None
         st.session_state["elapsed_time_string"] = None
+        st.session_state["initial_pipeline_count"] = None
         st.markdown("---")
         
         status_col = st.columns(1)[0]
@@ -271,7 +272,6 @@ if run_audit:
             if not sitemap:
                 st.error("❌ Link Discovery Fault: No Sitemap Found (404). Check spelling or try a full URL prefix.")
             else:
-                st.markdown(f"**📌 Target Route Discovered:** `{sitemap}`")
                 with st.spinner("🧬 Decompressing mapping files and extracting structural target page nodes..."):
                     urls = get_urls_from_sitemap(sitemap)
                     
@@ -285,8 +285,9 @@ if run_audit:
                     else:
                         st.info(f"📋 **Pipeline Initiated:** Found **{len(urls)}** unique URLs to systematically analyze.")
                     
-                    start_time = time.time()
+                    st.session_state["initial_pipeline_count"] = len(urls)
                     
+                    start_time = time.time()
                     results = []
                     progress_bar = st.progress(0)
                     status_text = st.empty()
@@ -309,30 +310,44 @@ if run_audit:
                             
                             try:
                                 audit_data = future.result()
-                                if audit_data:
-                                    results.append(audit_data)
+                                # LOGIC UPGRADE: If the API failed to return data, add a fallback error row to our final dataset
+                                if not audit_data:
+                                    audit_data = {
+                                        "URL": url, 
+                                        "Status": "🔴 API Timeout/Error",
+                                        "Score": 0, 
+                                        "LCP (s)": 0.0, 
+                                        "CLS": 0.0, 
+                                        "TBT (ms)": 0, 
+                                        "INP (ms)": 0, 
+                                        "TTFB (s)": 0.0, 
+                                        "FCP (s)": 0.0, 
+                                        "Issues Found": "API Request Failed or Timed Out"
+                                    }
+                                
+                                results.append(audit_data)
+                                
+                                current_stream_df = pd.DataFrame(results)
+                                current_stream_df.index = current_stream_df.index + 1
+                                
+                                column_order = ["URL", "Status", "Score", "LCP (s)", "CLS", "TBT (ms)", "INP (ms)", "TTFB (s)", "FCP (s)", "Issues Found"]
+                                existing_cols = [c for c in column_order if c in current_stream_df.columns]
+                                current_stream_df = current_stream_df[existing_cols]
+                                
+                                try:
+                                    styled_stream = current_stream_df.style.map(style_score_colors, subset=['Score'])
+                                ] except AttributeError:
+                                    styled_stream = current_stream_df.style.applymap(style_score_colors, subset=['Score'])
                                     
-                                    current_stream_df = pd.DataFrame(results)
-                                    current_stream_df.index = current_stream_df.index + 1
-                                    
-                                    column_order = ["URL", "Status", "Score", "LCP (s)", "CLS", "TBT (ms)", "INP (ms)", "TTFB (s)", "FCP (s)", "Issues Found"]
-                                    existing_cols = [c for c in column_order if c in current_stream_df.columns]
-                                    current_stream_df = current_stream_df[existing_cols]
-                                    
-                                    try:
-                                        styled_stream = current_stream_df.style.map(style_score_colors, subset=['Score'])
-                                    except AttributeError:
-                                        styled_stream = current_stream_df.style.applymap(style_score_colors, subset=['Score'])
-                                        
-                                    live_table_placeholder.dataframe(
-                                        styled_stream,
-                                        use_container_width=True,
-                                        column_config={
-                                            "URL": st.column_config.TextColumn("Audited URL Target"),
-                                            "Status": st.column_config.TextColumn("Status"),
-                                            "Score": st.column_config.ProgressColumn("Performance Score", format="%d", min_value=0, max_value=100)
-                                        }
-                                    )
+                                live_table_placeholder.dataframe(
+                                    styled_stream,
+                                    use_container_width=True,
+                                    column_config={
+                                        "URL": st.column_config.TextColumn("Audited URL Target"),
+                                        "Status": st.column_config.TextColumn("Status"),
+                                        "Score": st.column_config.ProgressColumn("Performance Score", format="%d", min_value=0, max_value=100)
+                                    }
+                                )
                             except Exception as exc:
                                 pass
                             progress_bar.progress(processed_count / total_urls)
@@ -363,28 +378,31 @@ if st.session_state.get("audit_results"):
     df.index = df.index + 1
     current_domain = st.session_state.get("active_domain", "Domain")
     duration_metric = st.session_state.get("elapsed_time_string", "N/A")
+    initial_total = st.session_state.get("initial_pipeline_count", len(df))
     
-    total_scanned = len(df)
+    # Calculate metrics based on the status flags
+    failed_skipped_count = len(df[df["Status"] == "🔴 API Timeout/Error"])
+    total_scanned = len(df) - failed_skipped_count
     passed_count = len(df[df["Issues Found"] == "Passed Audit"])
     issue_count = total_scanned - passed_count
     
-    # NEW METRIC CALCULATION: Total count of pages scoring strictly less than 90 (< 90)
-    low_score_count = len(df[df["Score"] < 90])
+    # Do not count failed API lines inside the performance score logic
+    low_score_count = len(df[(df["Score"] < 90) & (df["Status"] != "🔴 API Timeout/Error")])
     
     st.markdown("### 📊 Audit Summary")
     
-    # Expanded grid setup to support the 5 metrics seamlessly
-    metric_col1, metric_col2, metric_col3, metric_col4, metric_col5 = st.columns(5)
-    with metric_col1:
+    m_col1, m_col2, m_col3, m_col4, m_col5, m_col6 = st.columns(6)
+    with m_col1:
         st.metric(label="Total Pages Evaluated", value=total_scanned)
-    with metric_col2:
+    with m_col2:
         st.metric(label="Fully Passed Pages", value=passed_count, delta=f"{round((passed_count/total_scanned)*100) if total_scanned > 0 else 0}% Match")
-    with metric_col3:
+    with m_col3:
         st.metric(label="Pages Flagging Issues", value=issue_count, delta=f"-{issue_count} Optimization Targets", delta_color="inverse")
-    with metric_col4:
-        # BRAND NEW DISPLAY BOX: Shows total paths scoring strictly under 90
-        st.metric(label="Low Performance Pages (<90)", value=low_score_count, delta="Score Target Deficit" if low_score_count > 0 else None, delta_color="inverse")
-    with metric_col5:
+    with m_col4:
+        st.metric(label="Low Performance (<90)", value=low_score_count, delta="Action Needed" if low_score_count > 0 else None, delta_color="inverse")
+    with m_col5:
+        st.metric(label="Failed / Skipped Pages", value=failed_skipped_count, delta=f"Out of {initial_total} total urls" if failed_skipped_count > 0 else None, delta_color="inverse" if failed_skipped_count > 0 else "off")
+    with m_col6:
         st.metric(label="Time Taken to Complete", value=duration_metric)
     
     st.markdown("### 📋 Dynamic Audit Log Sheets")
@@ -414,11 +432,4 @@ if st.session_state.get("audit_results"):
                                                  .str.replace("🟠 ", "", regex=False)\
                                                  .str.replace("🔴 ", "", regex=False)
     
-    csv_data = export_df.to_csv(index=False).encode('utf-8-sig')
-    st.download_button(
-        label="📥 Export Audit Data as CSV Sheet", 
-        data=csv_data, 
-        file_name=f"Growth99_SEO_Audit_{current_domain}.csv", 
-        mime='text/csv',
-        type="secondary"
-    )
+    csv_data = export_df.
