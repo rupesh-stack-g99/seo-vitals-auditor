@@ -189,15 +189,20 @@ def safe_get_metric(audits_dict, key_name):
 def fetch_vitals(url, api_key):
     api_url = f"https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url={requests.utils.quote(url)}&key={api_key}&strategy=mobile&category=performance"
     
-    max_retries = 3
+    # LOGIC UPGRADE: Increased retries and extended timeouts (up to 45 seconds per request) to prevent network drops
+    max_retries = 4
     for attempt in range(max_retries):
         try:
-            res = requests.get(api_url, timeout=30)
+            # Gradually increase timeouts per retry attempt (30s, 35s, 40s, 45s)
+            current_timeout = 30 + (attempt * 5)
+            res = requests.get(api_url, timeout=current_timeout)
+            
             if res.status_code == 429:
-                time.sleep(5)  
+                time.sleep(6 * (attempt + 1))  # Exponential backoff on rate limits
                 continue
             if res.status_code != 200:
-                return None
+                time.sleep(2)
+                continue
                 
             data = res.json()
             audits = data['lighthouseResult']['audits']
@@ -241,7 +246,7 @@ def fetch_vitals(url, api_key):
         except Exception as e:
             if attempt == max_retries - 1:
                 return None
-            time.sleep(1)
+            time.sleep(3) # Wait briefly before triggering the next retry attempt
     return None
 
 def style_score_colors(val):
@@ -421,19 +426,3 @@ if st.session_state.get("audit_results"):
             "Status": st.column_config.TextColumn("Status", help="Performance status categorization group"),
             "Score": st.column_config.ProgressColumn("Performance Score", format="%d", min_value=0, max_value=100)
         }
-    )
-    
-    export_df = df.copy()
-    if "Status" in export_df.columns:
-        export_df["Status"] = export_df["Status"].astype(str).str.replace("🟢 ", "", regex=False)\
-                                                 .str.replace("🟠 ", "", regex=False)\
-                                                 .str.replace("🔴 ", "", regex=False)
-    
-    csv_data = export_df.to_csv(index=False).encode('utf-8-sig')
-    st.download_button(
-        label="📥 Export Audit Data as CSV Sheet", 
-        data=csv_data, 
-        file_name=f"Growth99_SEO_Audit_{current_domain}.csv", 
-        mime='text/csv',
-        type="secondary"
-    )
