@@ -12,14 +12,15 @@ st.set_page_config(
     layout="wide"
 )
 
-# Custom Premium Styling
+# Custom Premium Dark Theme Styling
 st.markdown("""
     <style>
-        /* Main background and overall text tweaks */
+        /* Main background and global text resets */
         .main {
             background-color: #0f111a;
         }
-        /* Header styling block */
+        
+        /* Premium Banner Header */
         .brand-header {
             background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             padding: 2.5rem;
@@ -27,25 +28,30 @@ st.markdown("""
             color: white;
             text-align: center;
             margin-bottom: 2rem;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
         .brand-header h1 {
             color: white !important;
             font-size: 2.8rem !important;
             font-weight: 800 !important;
-            margin-bottom: 0.2rem !important;
+            margin-bottom: 0.4rem !important;
         }
         .brand-header p {
             font-size: 1.1rem;
-            opacity: 0.9;
+            opacity: 0.95;
+            margin: 0;
         }
-        /* Card Container Styling */
-        .card-box {
-            background-color: #1a1c24;
-            padding: 1.5rem;
-            border-radius: 8px;
-            border: 1px solid #2d313e;
-            margin-bottom: 1rem;
+
+        /* Clean up Sidebar visual spacing */
+        section[data-testid="stSidebar"] .stMarkdown {
+            padding-right: 10px;
+        }
+        
+        /* Remove default borders around the form block container */
+        div[data-testid="stForm"] {
+            border: none !important;
+            padding: 0 !important;
+            background-color: transparent !important;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -57,7 +63,7 @@ with st.sidebar:
     st.markdown("""
     * **Automated Discovery:** Finds and decompresses your website's primary XML sitemap layouts.
     * **Target Mapping:** Extracts high-value page, service, and portfolio links.
-    * **Smart Filtering:** Automatically ignores media files (.webp, .png, .pdf) & Blogs to protect your API limits.
+    * **Smart Filtering:** Automatically ignores media files (`.webp`, `.png`, `.pdf`) & Blogs to protect your API limits.
     * **Real-time Core Vitals Diagnostics:** Directly analyzes performance, LCP, CLS, TBT, and responsiveness metrics via the Google PageSpeed API.
     """)
 
@@ -67,23 +73,33 @@ st.markdown("""
     <div class="brand-header">
         <h1>PageSpeed Auditor</h1>
         <p>Advanced Core Web Vitals Crawl Engine • Powered by <b>Growth99</b></p>
-        <p style="font-size: 1rem; margin-top: 0.5rem; opacity: 0.8;">
+        <p style="font-size: 0.95rem; margin-top: 0.6rem; opacity: 0.85; max-width: 800px; margin-left: auto; margin-right: auto;">
             Analyze website performance, identify Core Web Vitals issues, and discover optimization opportunities across your most important pages.
         </p>
     </div>
 """, unsafe_allow_html=True)
 
-# Domain Input Section
-st.markdown("### ⚡ Core Web Vitals & PageSpeed Analyzer")
-target_domain = st.text_input(
-    "Target Website Domain", 
-    placeholder="e.g., mysite.com or https://mysite.com",
-    label_visibility="collapsed"
-)
+# --- INTERACTIVE CONTROL CARD SECTION ---
+st.markdown("### 🔍 Initiate Deep Domain Analysis")
 
-# Slight spacer before the button for visual breathing room
-st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
-run_audit = st.button("Run Performance Audit", use_container_width=False, type="primary")
+# Wrapping within an aligned form structure so input and action submit cleanly on one track
+with st.form(key="audit_input_form"):
+    # Split row into input field (85% width) and action button (15% width)
+    input_col, button_col = st.columns([0.85, 0.15], vertical_alignment="bottom")
+    
+    with input_col:
+        target_domain = st.text_input(
+            "Target Website Domain",
+            placeholder="e.g., mysite.com or https://mysite.com",
+            label_visibility="collapsed"
+        )
+        
+    with button_col:
+        run_audit = st.form_submit_button(
+            label="Run Deep Audit", 
+            use_container_width=True,
+            type="primary"
+        )
 
 # --- API KEY FETCH ---
 API_KEY = st.secrets.get("PAGESPEED_API_KEY", "")
