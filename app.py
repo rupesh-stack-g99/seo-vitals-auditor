@@ -71,7 +71,7 @@ st.markdown("""
         <ul style="margin-bottom: 0; color: #cbd5e1; font-size: 0.95rem; padding-left: 1.2rem;">
             <li><b>Automated Discovery:</b> Finds and decompresses your website's primary XML sitemap layouts.</li>
             <li><b>Target Mapping:</b> Extracts high-value page, service, and portfolio links.</li>
-            <li><b>Smart Filtering:</b> Automatically ignores media files (.webp, .png, .pdf) & Blogs to protect your API limits.</li>
+            <li><b>Smart Filtering:</b> Automatically ignores media files (.webp, .png, .pdf) & Blogs.</li>
             <li><b>Real-time Core Vitals Diagnostics:</b> Directly analyzes performance, LCP, CLS, TBT, and responsiveness metrics via the Google PageSpeed API.</li>
         </ul>
     </div>
