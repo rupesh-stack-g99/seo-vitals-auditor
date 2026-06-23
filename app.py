@@ -94,7 +94,7 @@ with st.sidebar:
     
     <div class="sidebar-section">
         <div class="sidebar-title">⚡ Smart URL Filtering</div>
-        <div class="sidebar-desc">Excludes media files (.webp, .png, .pdf) and blog non-essential URLs to ensure accurate audits.</div>
+        <div class="sidebar-desc">Excludes media files (.webp, .png, .pdf), blog and non-essential URLs to ensure accurate audits.</div>
     </div>
     
     <div class="sidebar-section">
