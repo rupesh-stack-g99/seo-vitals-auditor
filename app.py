@@ -64,14 +64,14 @@ API_KEY = st.secrets.get("PAGESPEED_API_KEY", "")
 if not API_KEY:
     API_KEY = st.text_input("🔑 Enter PageSpeed API Key", type="password", help="Provide your Google PageSpeed Insights API key.")
 
-# Professional "How it works" Guideline Display
+# Professional "How it works" Guideline Display (Blog references completely removed)
 st.markdown("""
     <div style="background-color: #1e293b; padding: 1.25rem; border-radius: 8px; border-left: 5px solid #3b82f6; margin-bottom: 1.5rem;">
         <h4 style="margin-top: 0; color: #f8fafc;">⚙️ How the Audit Engine Works</h4>
         <ul style="margin-bottom: 0; color: #cbd5e1; font-size: 0.95rem; padding-left: 1.2rem;">
             <li><b>Automated Discovery:</b> Finds and decompresses your website's primary XML sitemap layouts.</li>
-            <li><b>Target Mapping:</b> Extracts high-value page, service, portfolio, and main blog category index links.</li>
-            <li><b>Smart Filtering:</b> Automatically ignores media files (.webp, .png, .pdf) and deeply nested individual blog posts to protect your API limits.</li>
+            <li><b>Target Mapping:</b> Extracts high-value page, service, and portfolio links.</li>
+            <li><b>Smart Filtering:</b> Automatically ignores media files (.webp, .png, .pdf) to protect your API limits.</li>
             <li><b>Real-time Core Vitals Diagnostics:</b> Directly analyzes performance, LCP, CLS, TBT, and responsiveness metrics via the Google PageSpeed API.</li>
         </ul>
     </div>
@@ -79,7 +79,7 @@ st.markdown("""
 
 st.markdown("---")
 
-# Domain Input Section Wrapped inside a clean layout container
+# Domain Input Section (Fixed alignment padding layout)
 with st.container():
     st.markdown("### 🔍 Initiate Deep Domain Analysis")
     col_input, col_btn = st.columns([4, 1])
@@ -91,7 +91,8 @@ with st.container():
             label_visibility="collapsed"
         )
     with col_btn:
-        st.markdown("<div style='margin-top: 1px;'></div>", unsafe_allow_html=True)
+        # Pushes button down exactly 24px to align it horizontally with the input field container row
+        st.markdown("<div style='margin-top: 24px;'></div>", unsafe_allow_html=True)
         run_audit = st.button("Run Deep Audit", use_container_width=True, type="primary")
 
 # --- CORE LOGIC FUNCTIONS ---
@@ -113,7 +114,8 @@ def find_sitemap_url(domain):
 
 def get_urls_from_sitemap(sitemap_url):
     urls = []
-    allowed_sitemaps = ["page-sitemap", "portfolio-sitemap", "blog-sitemap"]
+    # "blog-sitemap" completely removed from allowed categories
+    allowed_sitemaps = ["page-sitemap", "portfolio-sitemap"]
     forbidden_ext = [".webp", ".png", ".jpg", ".jpeg", ".svg", ".gif", ".pdf", ".zip"]
     
     try:
@@ -132,8 +134,8 @@ def get_urls_from_sitemap(sitemap_url):
                     urls.extend(get_urls_from_sitemap(loc))
             else:
                 is_image = any(loc.lower().endswith(ext) for ext in forbidden_ext)
-                is_main_blog = loc.lower().endswith("/blog") or loc.lower().endswith("/blog/")
-                if not is_image and "/wp-content/uploads/" not in loc.lower() and ("/blog/" not in loc.lower() or is_main_blog):
+                # Filter out any blog mentions completely
+                if not is_image and "/wp-content/uploads/" not in loc.lower() and "/blog" not in loc.lower():
                     urls.append(loc)
     except Exception as e:
         pass
