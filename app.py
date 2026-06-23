@@ -68,7 +68,7 @@ st.markdown("""
 
 # --- COLLAPSIBLE LEFT SIDEBAR PANEL ---
 with st.sidebar:
-    st.markdown("### ⚙️ How the Audit Engine Works")
+    st.markdown("### How the PageSpeed Auditor Works")
     st.markdown("---")
     
     # Using clean HTML blocks to guarantee explicit spacing control down the sidebar
