@@ -80,7 +80,6 @@ with st.sidebar:
     st.markdown("### How the PageSpeed Auditor Works")
     st.markdown("---")
     
-    # Premium spaced HTML structure for clear sidebar presentation
     st.markdown("""
     <div class="sidebar-section">
         <div class="sidebar-title">🔍 Sitemap Discovery</div>
@@ -114,7 +113,6 @@ with st.sidebar:
     """, unsafe_allow_html=True)
 
 # --- MAIN WORKSPACE ---
-# Brand Hero Banner Block
 st.markdown("""
     <div class="brand-header">
         <h1>PageSpeed Auditor</h1>
@@ -125,12 +123,9 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# --- INTERACTIVE CONTROL CARD SECTION ---
 st.markdown("### 🔍 Initiate Deep Domain Analysis")
 
-# Wrapping within an aligned form structure so input and action submit cleanly on one track
 with st.form(key="audit_input_form"):
-    # Split row into input field (85% width) and action button (15% width)
     input_col, button_col = st.columns([0.85, 0.15], vertical_alignment="bottom")
     
     with input_col:
@@ -248,6 +243,9 @@ if run_audit:
     elif not target_domain:
         st.error("⚠️ System Alert: Please enter a domain before executing the scan pipeline.")
     else:
+        # Clear out previous stored audit data on a brand new execution run
+        st.session_state["audit_results"] = None
+        st.session_state["active_domain"] = None
         st.markdown("---")
         
         status_col = st.columns(1)[0]
@@ -281,38 +279,46 @@ if run_audit:
                     
                     status_text.empty()
                     progress_bar.empty()
-                    st.success("🎉 **Data Collection Processing Cycle Complete!**")
                     
                     if len(results) > 0:
-                        df = pd.DataFrame(results)
-                        df.index = df.index + 1
-                        
-                        # --- BRAND METRIC EXECUTIVE SUMMARY SECTION ---
-                        total_scanned = len(df)
-                        passed_count = len(df[df["Issues Found"] == "Passed Audit"])
-                        issue_count = total_scanned - passed_count
-                        
-                        st.markdown("### 📊 Audit Summary")
-                        metric_col1, metric_col2, metric_col3 = st.columns(3)
-                        with metric_col1:
-                            st.metric(label="Total Pages Evaluated", value=total_scanned)
-                        with metric_col2:
-                            st.metric(label="Fully Passed Pages", value=passed_count, delta=f"{round((passed_count/total_scanned)*100)}% Match")
-                        with metric_col3:
-                            st.metric(label="Pages Flagging Issues", value=issue_count, delta=f"-{issue_count} Optimization Targets", delta_color="inverse")
-                        
-                        # --- MAIN INTERACTIVE TABLE DISPLAY ---
-                        st.markdown("### 📋 Dynamic Audit Log Sheets")
-                        st.dataframe(df, use_container_width=True)
-                        
-                        # Direct Action Download Option Button
-                        csv = df.to_csv(index=False).encode('utf-8')
-                        st.download_button(
-                            label="📥 Export Audit Data as CSV Sheet", 
-                            data=csv, 
-                            file_name=f"Growth99_SEO_Audit_{target_domain}.csv", 
-                            mime='text/csv',
-                            type="secondary"
-                        )
+                        # Save the completed data run securely inside the permanent session storage state
+                        st.session_state["audit_results"] = results
+                        st.session_state["active_domain"] = target_domain
+                        st.success("🎉 **Data Collection Processing Cycle Complete!**")
                     else:
                         st.error("System Failure: Could not fetch diagnostics for these URLs.")
+
+# --- PERSISTENT DATA RENDERING BLOCK ---
+# This block catches script reruns (like Export clicks) and keeps the data drawn safely on-screen
+if st.session_state.get("audit_results"):
+    df = pd.DataFrame(st.session_state["audit_results"])
+    df.index = df.index + 1
+    current_domain = st.session_state.get("active_domain", "Domain")
+    
+    # --- BRAND METRIC EXECUTIVE SUMMARY SECTION ---
+    total_scanned = len(df)
+    passed_count = len(df[df["Issues Found"] == "Passed Audit"])
+    issue_count = total_scanned - passed_count
+    
+    st.markdown("### 📊 Audit Summary")
+    metric_col1, metric_col2, metric_col3 = st.columns(3)
+    with metric_col1:
+        st.metric(label="Total Pages Evaluated", value=total_scanned)
+    with metric_col2:
+        st.metric(label="Fully Passed Pages", value=passed_count, delta=f"{round((passed_count/total_scanned)*100)}% Match")
+    with metric_col3:
+        st.metric(label="Pages Flagging Issues", value=issue_count, delta=f"-{issue_count} Optimization Targets", delta_color="inverse")
+    
+    # --- MAIN INTERACTIVE TABLE DISPLAY ---
+    st.markdown("### 📋 Dynamic Audit Log Sheets")
+    st.dataframe(df, use_container_width=True)
+    
+    # Direct Action Download Option Button
+    csv = df.to_csv(index=False).encode('utf-8')
+    st.download_button(
+        label="📥 Export Audit Data as CSV Sheet", 
+        data=csv, 
+        file_name=f"Growth99_SEO_Audit_{current_domain}.csv", 
+        mime='text/csv',
+        type="secondary"
+    )
