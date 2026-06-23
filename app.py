@@ -426,3 +426,19 @@ if st.session_state.get("audit_results"):
             "Status": st.column_config.TextColumn("Status", help="Performance status categorization group"),
             "Score": st.column_config.ProgressColumn("Performance Score", format="%d", min_value=0, max_value=100)
         }
+    )
+    
+    export_df = df.copy()
+    if "Status" in export_df.columns:
+        export_df["Status"] = export_df["Status"].astype(str).str.replace("🟢 ", "", regex=False)\
+                                                 .str.replace("🟠 ", "", regex=False)\
+                                                 .str.replace("🔴 ", "", regex=False)
+    
+    csv_data = export_df.to_csv(index=False).encode('utf-8-sig')
+    st.download_button(
+        label="📥 Export Audit Data as CSV Sheet", 
+        data=csv_data, 
+        file_name=f"Growth99_SEO_Audit_{current_domain}.csv", 
+        mime='text/csv',
+        type="secondary"
+    )
