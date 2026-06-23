@@ -77,6 +77,16 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# Helper function to wipe all states and start fresh
+def clear_all_audit_data():
+    st.session_state["audit_results"] = None
+    st.session_state["active_domain"] = None
+    st.session_state["elapsed_time_string"] = None
+    st.session_state["initial_pipeline_count"] = None
+    if "auto_triggered" in st.session_state:
+        del st.session_state["auto_triggered"]
+    st.query_params.clear()
+
 # --- COLLAPSIBLE LEFT SIDEBAR PANEL ---
 with st.sidebar:
     st.markdown("### How the Audit Engine Works")
@@ -119,15 +129,16 @@ st.markdown("""
 
 st.markdown("### 🔍 Initiate Deep Domain Analysis")
 
-# FEATURE UPGRADE: Read initial domain from URL query string if it exists
+# Feature: Read initial domain from URL query string if it exists
 url_params = st.query_params
 default_domain = url_params.get("domain", "")
 
-# If a domain parameter is passed via URL for the first time, auto-trigger the execution pipeline
-auto_run = False
+# Manage run execution via Session State cleanly
 if "auto_triggered" not in st.session_state and default_domain != "":
     st.session_state["auto_triggered"] = True
     auto_run = True
+else:
+    auto_run = False
 
 with st.form(key="audit_input_form"):
     input_col, button_col = st.columns([0.85, 0.15], vertical_alignment="bottom")
@@ -147,14 +158,10 @@ with st.form(key="audit_input_form"):
             type="primary"
         )
 
-# Execute if form is clicked OR if auto-triggered via a shared link parameters string
-should_execute = run_audit or auto_run
-
 # --- API KEY FETCH ---
 API_KEY = st.secrets.get("PAGESPEED_API_KEY", "")
 
 # --- CORE LOGIC FUNCTIONS ---
-
 def find_sitemap_url(domain):
     paths = ["/sitemap_index.xml", "/sitemap.xml", "/post-sitemap.xml"]
     clean_domain = domain.strip().rstrip("/")
@@ -269,13 +276,12 @@ def style_score_colors(val):
     return ''
 
 # --- UI APPLICATION PROCESS FLOW ---
-if should_execute:
+if run_audit or auto_run:
     if not API_KEY:
         st.error("⚠️ Setup Interruption: Please check or provide your PAGESPEED_API_KEY inside secrets.")
     elif not target_domain:
         st.error("⚠️ System Alert: Please enter a domain before executing the scan pipeline.")
     else:
-        # FEATURE UPGRADE: Write parameter straight to browser URL bar
         st.query_params["domain"] = target_domain
         
         st.session_state["audit_results"] = None
@@ -446,14 +452,29 @@ if st.session_state.get("audit_results"):
     export_df = df.copy()
     if "Status" in export_df.columns:
         export_df["Status"] = export_df["Status"].astype(str).str.replace("🟢 ", "", regex=False)\
-                                                 .str.replace("🟠 ", "", regex=False)\
-                                                 .str.replace("🔴 ", "", regex=False)
+                                                             .str.replace("🟠 ", "", regex=False)\
+                                                             .str.replace("🔴 ", "", regex=False)
     
     csv_data = export_df.to_csv(index=False).encode('utf-8-sig')
-    st.download_button(
-        label="📥 Export Audit Data as CSV Sheet", 
-        data=csv_data, 
-        file_name=f"Growth99_SEO_Audit_{current_domain}.csv", 
-        mime='text/csv',
-        type="secondary"
-    )
+    
+    # Bottom Navigation Actions (Export & Reset Side by Side)
+    action_col1, action_col2, filler_col = st.columns([0.25, 0.20, 0.55])
+    
+    with action_col1:
+        st.download_button(
+            label="📥 Export Audit Data as CSV Sheet", 
+            data=csv_data, 
+            file_name=f"Growth99_SEO_Audit_{current_domain}.csv", 
+            mime='text/csv',
+            type="secondary",
+            use_container_width=True
+        )
+        
+    with action_col2:
+        st.button(
+            label="🔄 Run New Audit",
+            type="primary",
+            use_container_width=True,
+            on_click=clear_all_audit_data,
+            help="Wipes out current metrics data and brings you back to input screen."
+        )
