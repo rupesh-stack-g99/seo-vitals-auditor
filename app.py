@@ -89,7 +89,7 @@ target_domain = st.text_input(
 
 # Slight spacer before the button for visual breathing room
 st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
-run_audit = st.button("Run Deep Audit", use_container_width=False, type="primary")
+run_audit = st.button("🚀 Run Performance Audit", use_container_width=False, type="primary")
 
 # --- CORE LOGIC FUNCTIONS ---
 
