@@ -7,7 +7,7 @@ from urllib.parse import urlparse
 
 # --- CONFIGURATION & UI SETUP ---
 st.set_page_config(
-    page_title="PageSpeed Auditor | Growth99", 
+    page_title="SiteVitals Pro | Growth99", 
     page_icon="🚀", 
     layout="wide",
     initial_sidebar_state="expanded"
@@ -258,4 +258,4 @@ if run_audit:
                             type="secondary"
                         )
                     else:
-                        st.error("System Failure: Unable to fetch core web speed diagnostics across selected
+                        st.error("System Failure: Could not fetch diagnostics for these URLs.")
