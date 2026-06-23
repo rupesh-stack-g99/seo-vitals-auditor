@@ -55,7 +55,9 @@ st.markdown("""
 st.markdown("""
     <div class="brand-header">
         <h1>PageSpeed Auditor</h1>
-        <p>Advanced Core Web Vitals Crawl Engine • Powered by <b>Growth99</b></p>
+        <p>Advanced Core Web Vitals Crawl Engine • Powered by <b>Growth99 Analyze Core Web Vitals, PageSpeed performance, and website health across your most important pages.
+
+✓ LCP Analysis ✓ CLS Detection ✓ INP Monitoring ✓ Mobile & Desktop Testing ✓ Sitemap Crawling</b></p>
     </div>
 """, unsafe_allow_html=True)
 
