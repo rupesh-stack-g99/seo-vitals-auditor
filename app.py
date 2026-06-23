@@ -129,7 +129,7 @@ st.markdown("""
         <h1>PageSpeed Auditor</h1>
         <p>Advanced Core Web Vitals Crawl Engine • Powered by <b>Growth99</b></p>
         <p style="font-size: 0.95rem; margin-top: 0.6rem; opacity: 0.85; max-width: 800px; margin-left: auto; margin-right: auto;">
-            Analyze website performance, identify Core Web Vitals issues, and discover optimization opportunities across your most important pages.
+            Analyze website performance, identify Core Web Vitals issues & discover optimization opportunities across your most important pages.
         </p>
     </div>
 """, unsafe_allow_html=True)
