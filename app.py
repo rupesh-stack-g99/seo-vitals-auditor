@@ -3,6 +3,7 @@ import requests
 import xml.etree.ElementTree as ET
 import pandas as pd
 import time
+import os
 from urllib.parse import urlparse
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -35,6 +36,21 @@ st.markdown("""
             color: rgba(255, 255, 255, 0.95) !important;
             font-size: 1.1rem;
             margin: 0;
+        }
+        .visitor-badge-container {
+            text-align: center;
+            margin-top: -1rem;
+            margin-bottom: 2rem;
+        }
+        .visitor-badge {
+            display: inline-block;
+            background: rgba(30, 60, 114, 0.08);
+            border: 1px solid rgba(30, 60, 114, 0.15);
+            padding: 0.4rem 1.2rem;
+            border-radius: 30px;
+            font-weight: 600;
+            color: #1e3c72;
+            font-size: 0.95rem;
         }
         section[data-testid="stSidebar"] .stMarkdown {
             padding-right: 12px;
@@ -76,6 +92,41 @@ st.markdown("""
         }
     </style>
 """, unsafe_allow_html=True)
+
+# --- VISITOR PERSISTENCE ENGINE ---
+COUNTER_FILE = "visitor_count.txt"
+
+def get_total_visitors():
+    """Reads or updates the global historical visitor file securely."""
+    if not os.path.exists(COUNTER_FILE):
+        try:
+            with open(COUNTER_FILE, "w") as f:
+                f.write("1")
+            return 1
+        except Exception:
+            return 1
+    try:
+        with open(COUNTER_FILE, "r") as f:
+            count = int(f.read().strip())
+        return count
+    except Exception:
+        return 1
+
+def increment_visitors():
+    """Increments count only once per explicit app session mount."""
+    if "tracked_session_visitor" not in st.session_state:
+        st.session_state["tracked_session_visitor"] = True
+        count = get_total_visitors()
+        new_count = count + 1
+        try:
+            with open(COUNTER_FILE, "w") as f:
+                f.write(str(new_count))
+        except Exception:
+            pass
+
+# Process the session count tracking cycle early
+increment_visitors()
+total_visitors_logged = get_total_visitors()
 
 # Initialize global state variables safely
 if "audit_running" not in st.session_state:
@@ -131,6 +182,13 @@ st.markdown("""
         <p style="font-size: 0.95rem; margin-top: 0.6rem; opacity: 0.85; max-width: 800px; margin-left: auto; margin-right: auto;">
             Analyze website performance, identify Core Web Vitals issues, and discover optimization opportunities across your most important pages.
         </p>
+    </div>
+""", unsafe_allow_html=True)
+
+# Render Global Analytics Row Below Header
+st.markdown(f"""
+    <div class="visitor-badge-container">
+        <span class="visitor-badge">📊 Total Engine Operations Logged: {total_visitors_logged:,}</span>
     </div>
 """, unsafe_allow_html=True)
 
@@ -286,7 +344,6 @@ def style_score_colors(val):
     return ''
 
 # --- UI APPLICATION PROCESS FLOW ---
-# CRITICAL FIX: Only run if state is flagged true, NOT directly off volatile button conditions
 if st.session_state["audit_running"] and st.session_state["audit_results"] is None:
     if not API_KEY:
         st.error("⚠️ Setup Interruption: Please check or provide your PAGESPEED_API_KEY inside secrets.")
