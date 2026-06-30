@@ -14,7 +14,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# Custom Premium & Dynamic Cross-Theme Styling (Dark-Theme Adaptive Fixes applied)
+# Custom Premium & Dynamic Cross-Theme Styling (Dark-Theme Adaptive)
 st.markdown("""
     <style>
         .brand-header {
@@ -131,9 +131,7 @@ if "audit_results" not in st.session_state:
 
 # Helper function to wipe all states and start fresh
 def clear_all_audit_data():
-    # Increment counter since user actively clicked "Run New Audit"
     increment_audit_counter()
-    
     st.session_state["audit_results"] = None
     st.session_state["active_domain"] = None
     st.session_state["elapsed_time_string"] = None
@@ -225,13 +223,11 @@ with st.form(key="audit_input_form"):
 
 # Trigger audit execution if explicit request criteria are met
 if run_audit or auto_run:
-    # Only increment if we are moving from NOT running to RUNNING 
-    # This prevents counting page refreshes during an active runtime stream
     if not st.session_state["audit_running"] and st.session_state["audit_results"] is None:
         increment_audit_counter()
-        st.rerun() # Refresh layout immediately to update counter badge visual state
-        
-    st.session_state["audit_running"] = True
+        st.session_state["audit_running"] = True
+        st.values = target_domain # sets target before instant refresh
+        st.rerun()
 
 # --- API KEY FETCH ---
 API_KEY = st.secrets.get("PAGESPEED_API_KEY", "")
