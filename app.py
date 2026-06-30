@@ -14,7 +14,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# Custom Premium & Dynamic Cross-Theme Styling
+# Custom Premium & Dynamic Cross-Theme Styling (Dark-Theme Adaptive Fixes applied)
 st.markdown("""
     <style>
         .brand-header {
@@ -44,13 +44,14 @@ st.markdown("""
         }
         .visitor-badge {
             display: inline-block;
-            background: rgba(30, 60, 114, 0.08);
-            border: 1px solid rgba(30, 60, 114, 0.15);
-            padding: 0.4rem 1.2rem;
+            background: var(--bg-color, rgba(30, 60, 114, 0.05));
+            border: 1px solid var(--primary-color, #2a5298);
+            padding: 0.5rem 1.5rem;
             border-radius: 30px;
             font-weight: 600;
-            color: #1e3c72;
-            font-size: 0.95rem;
+            color: var(--text-color, #1e3c72);
+            font-size: 1rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
         section[data-testid="stSidebar"] .stMarkdown {
             padding-right: 12px;
