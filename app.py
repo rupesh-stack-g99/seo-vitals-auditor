@@ -93,40 +93,34 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- VISITOR PERSISTENCE ENGINE ---
-COUNTER_FILE = "visitor_count.txt"
+# --- AUDIT RUN COUNTER STORAGE ENGINE ---
+COUNTER_FILE = "audit_run_count.txt"
 
-def get_total_visitors():
-    """Reads or updates the global historical visitor file securely."""
+def get_total_audits():
+    """Reads the global historical audit run file securely."""
     if not os.path.exists(COUNTER_FILE):
         try:
             with open(COUNTER_FILE, "w") as f:
-                f.write("1")
-            return 1
+                f.write("0")
+            return 0
         except Exception:
-            return 1
+            return 0
     try:
         with open(COUNTER_FILE, "r") as f:
             count = int(f.read().strip())
         return count
     except Exception:
-        return 1
+        return 0
 
-def increment_visitors():
-    """Increments count only once per explicit app session mount."""
-    if "tracked_session_visitor" not in st.session_state:
-        st.session_state["tracked_session_visitor"] = True
-        count = get_total_visitors()
-        new_count = count + 1
-        try:
-            with open(COUNTER_FILE, "w") as f:
-                f.write(str(new_count))
-        except Exception:
-            pass
-
-# Process the session count tracking cycle early
-increment_visitors()
-total_visitors_logged = get_total_visitors()
+def increment_audit_counter():
+    """Increments the persistent file count by 1."""
+    count = get_total_audits()
+    new_count = count + 1
+    try:
+        with open(COUNTER_FILE, "w") as f:
+            f.write(str(new_count))
+    except Exception:
+        pass
 
 # Initialize global state variables safely
 if "audit_running" not in st.session_state:
@@ -136,6 +130,9 @@ if "audit_results" not in st.session_state:
 
 # Helper function to wipe all states and start fresh
 def clear_all_audit_data():
+    # Increment counter since user actively clicked "Run New Audit"
+    increment_audit_counter()
+    
     st.session_state["audit_results"] = None
     st.session_state["active_domain"] = None
     st.session_state["elapsed_time_string"] = None
@@ -185,10 +182,13 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# Render Global Analytics Row Below Header
+# Fetch count to print below header dynamically
+total_audits_logged = get_total_audits()
+
+# Render Global Analytics Badge
 st.markdown(f"""
     <div class="visitor-badge-container">
-        <span class="visitor-badge">📊 Total Engine Operations Logged: {total_visitors_logged:,}</span>
+        <span class="visitor-badge">🚀 Total Audits Executed: {total_audits_logged:,}</span>
     </div>
 """, unsafe_allow_html=True)
 
@@ -224,6 +224,12 @@ with st.form(key="audit_input_form"):
 
 # Trigger audit execution if explicit request criteria are met
 if run_audit or auto_run:
+    # Only increment if we are moving from NOT running to RUNNING 
+    # This prevents counting page refreshes during an active runtime stream
+    if not st.session_state["audit_running"] and st.session_state["audit_results"] is None:
+        increment_audit_counter()
+        st.rerun() # Refresh layout immediately to update counter badge visual state
+        
     st.session_state["audit_running"] = True
 
 # --- API KEY FETCH ---
