@@ -3,7 +3,6 @@ import requests
 import xml.etree.ElementTree as ET
 import pandas as pd
 import time
-import os
 from urllib.parse import urlparse
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -14,7 +13,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# Custom Premium & Dynamic Cross-Theme Styling (Dark-Theme Adaptive)
+# Custom Premium & Dynamic Cross-Theme Styling (Cleaned up badge styles)
 st.markdown("""
     <style>
         .brand-header {
@@ -36,22 +35,6 @@ st.markdown("""
             color: rgba(255, 255, 255, 0.95) !important;
             font-size: 1.1rem;
             margin: 0;
-        }
-        .visitor-badge-container {
-            text-align: center;
-            margin-top: -1rem;
-            margin-bottom: 2rem;
-        }
-        .visitor-badge {
-            display: inline-block;
-            background: var(--bg-color, rgba(30, 60, 114, 0.05));
-            border: 1px solid var(--primary-color, #2a5298);
-            padding: 0.5rem 1.5rem;
-            border-radius: 30px;
-            font-weight: 600;
-            color: var(--text-color, #1e3c72);
-            font-size: 1rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
         section[data-testid="stSidebar"] .stMarkdown {
             padding-right: 12px;
@@ -94,35 +77,6 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- AUDIT RUN COUNTER STORAGE ENGINE ---
-COUNTER_FILE = "audit_run_count.txt"
-
-def get_total_audits():
-    """Reads the global historical audit run file securely."""
-    if not os.path.exists(COUNTER_FILE):
-        try:
-            with open(COUNTER_FILE, "w") as f:
-                f.write("0")
-            return 0
-        except Exception:
-            return 0
-    try:
-        with open(COUNTER_FILE, "r") as f:
-            count = int(f.read().strip())
-        return count
-    except Exception:
-        return 0
-
-def increment_audit_counter():
-    """Increments the persistent file count by 1."""
-    count = get_total_audits()
-    new_count = count + 1
-    try:
-        with open(COUNTER_FILE, "w") as f:
-            f.write(str(new_count))
-    except Exception:
-        pass
-
 # Initialize global state variables safely
 if "audit_running" not in st.session_state:
     st.session_state["audit_running"] = False
@@ -131,7 +85,6 @@ if "audit_results" not in st.session_state:
 
 # Helper function to wipe all states and start fresh
 def clear_all_audit_data():
-    increment_audit_counter()
     st.session_state["audit_results"] = None
     st.session_state["active_domain"] = None
     st.session_state["elapsed_time_string"] = None
@@ -181,16 +134,6 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# Fetch count to print below header dynamically
-total_audits_logged = get_total_audits()
-
-# Render Global Analytics Badge
-st.markdown(f"""
-    <div class="visitor-badge-container">
-        <span class="visitor-badge">🚀 Total Audits Executed: {total_audits_logged:,}</span>
-    </div>
-""", unsafe_allow_html=True)
-
 st.markdown("### 🔍 Initiate Deep Domain Analysis")
 
 # Feature: Read initial domain from URL query string if it exists
@@ -224,9 +167,8 @@ with st.form(key="audit_input_form"):
 # Trigger audit execution if explicit request criteria are met
 if run_audit or auto_run:
     if not st.session_state["audit_running"] and st.session_state["audit_results"] is None:
-        increment_audit_counter()
         st.session_state["audit_running"] = True
-        st.values = target_domain # sets target before instant refresh
+        st.query_params["domain"] = target_domain
         st.rerun()
 
 # --- API KEY FETCH ---
